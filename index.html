@@ -10,23 +10,32 @@
 <meta name="theme-color" content="#2F5D50">
 <title>LIFE OS</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232F5D50'/%3E%3Ctext x='32' y='42' font-size='30' text-anchor='middle' fill='%23FAF6F0' font-family='Georgia,serif' font-weight='bold'%3EL%3C/text%3E%3Ccircle cx='46' cy='18' r='6' fill='%23E07A5F'/%3E%3C/svg%3E">
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%232F5D50'/%3E%3Ctext x='32' y='42' font-size='30' text-anchor='middle' fill='%23FAF6F0' font-family='Georgia,serif' font-weight='bold'%3EL%3C/text%3E%3C/svg%3E">
+<!-- iOS accepteert alleen een echt PNG-bestand als home-screen-icoon (geen SVG/data-URL);
+     zonder dit bestand valt iOS terug op een pagina-screenshot als icoon. -->
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Lora:wght@600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --groen:#2F5D50; --terra:#E07A5F; --creme:#FAF6F0; --lichtgroen:#EAF1EE;
-  --inkt:#26302D; --grijs:#6B7572;
+  /* Palet uit het design system; --grijs is gedonkerd van #6B7572 naar #67706D
+     (4,74:1 op crème — WCAG AA; het origineel haalde 4,42:1 en faalde net).
+     --terra blijft de accentkleur voor decoratie; tekstdragende terracotta
+     gebruikt --terra-diep #AF5F4A (4,6:1 met wit — #E07A5F haalde maar 2,95:1). */
+  --groen:#2F5D50; --terra:#E07A5F; --terra-diep:#AF5F4A; --creme:#FAF6F0; --lichtgroen:#EAF1EE;
+  --inkt:#26302D; --grijs:#67706D;
   --rood:#F8D7DA; --amber:#FFE8C9; --oke:#D9EAD3;
   --rood-t:#8f3a42; --amber-t:#8a5a17; --oke-t:#3d6b34;
   --radius:14px; --tabbar-h:64px;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html{font-size:16px}
+/* scroll-padding: gefocuste elementen nooit achter de vaste tab-bar (WCAG 2.4.11) */
+html{font-size:16px;background:var(--creme);scroll-padding-bottom:calc(var(--tabbar-h) + 16px)}
 body{
   font-family:'Poppins',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   background:var(--creme); color:var(--inkt); line-height:1.5;
+  padding-top:env(safe-area-inset-top,0px);
   padding-bottom:calc(var(--tabbar-h) + env(safe-area-inset-bottom,0px));
 }
 h1,h2,h3{font-family:'Lora',Georgia,serif;color:var(--groen)}
@@ -43,10 +52,11 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--groen);outline-o
 @media(min-width:900px){
   body{padding-bottom:0}
   .sidebar{
-    display:flex;flex-direction:column;gap:.25rem;width:220px;flex-shrink:0;
+    display:block;width:220px;flex-shrink:0;
     background:var(--groen);color:#fff;padding:1.2rem .8rem;min-height:100vh;
     position:sticky;top:0;height:100vh;
   }
+  .sidebar nav{display:flex;flex-direction:column;gap:.25rem}
   .sidebar .brand{font-family:'Lora',serif;font-size:1.35rem;color:#fff;padding:.3rem .6rem 1rem}
   .sidebar .brand span{color:var(--terra)}
   .side-btn{
@@ -101,7 +111,7 @@ main{flex:1;max-width:820px;margin:0 auto;padding:1rem;width:100%}
 .b-rood{background:var(--rood);color:var(--rood-t)}
 .b-amber{background:var(--amber);color:var(--amber-t)}
 .b-groen{background:var(--oke);color:var(--oke-t)}
-.b-terra{background:var(--terra);color:#fff}
+.b-terra{background:var(--terra-diep);color:#fff}
 .b-veg{background:var(--oke);color:var(--oke-t)}
 .b-grijs{background:#eee9e0;color:var(--grijs)}
 /* ---------- lijsten & rijen ---------- */
@@ -113,17 +123,17 @@ main{flex:1;max-width:820px;margin:0 auto;padding:1rem;width:100%}
 .rij.klaar .titel{text-decoration:line-through;color:var(--grijs);font-weight:400}
 .knop{background:var(--groen);color:#fff;padding:.6rem 1rem;font-weight:600;min-height:44px}
 .knop:hover{background:#254c41}
-.knop.terra{background:var(--terra)}
-.knop.terra:hover{background:#cc6a50}
+.knop.terra{background:var(--terra-diep)}
+.knop.terra:hover{background:#97503d}
 .knop.licht{background:var(--lichtgroen);color:var(--groen)}
-.knop.klein{padding:.35rem .7rem;min-height:36px;font-size:.8rem}
+.knop.klein{padding:.35rem .7rem;min-height:44px;font-size:.8rem}
 .knop.gevaar{background:var(--rood);color:var(--rood-t)}
 .iconbtn{background:var(--lichtgroen);color:var(--groen);width:44px;height:44px;min-width:44px;
   font-size:1.15rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
-.iconbtn.mini{width:38px;height:38px;min-width:38px}
-.del{background:none;color:#c9c2b6;font-size:1.1rem;width:40px;height:40px;min-width:40px}
+.iconbtn.mini{width:44px;height:44px;min-width:44px}
+.del{background:none;color:#a39c90;font-size:1.15rem;width:44px;height:44px;min-width:44px}
 .del:hover{color:var(--rood-t)}
-.chk{width:22px;height:22px;min-width:22px;accent-color:var(--groen)}
+.chk{width:24px;height:24px;min-width:24px;accent-color:var(--groen)}
 .formrij{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.7rem}
 .formrij input,.formrij select{flex:1;min-width:110px}
 .formrij input[type=date]{min-width:140px}
@@ -145,23 +155,40 @@ pre.sql{background:#26302D;color:#d7e3dd;padding:.9rem;border-radius:10px;font-s
 .hint{font-size:.78rem;color:var(--grijs);margin-top:.4rem}
 .veldlabel{font-size:.75rem;font-weight:600;color:var(--grijs);text-transform:uppercase;letter-spacing:.04em;display:block;margin:.7rem 0 .25rem}
 .agenda-frame{width:100%;height:70vh;border:none;border-radius:var(--radius);background:#fff}
-.modal-backdrop{position:fixed;inset:0;background:rgba(38,48,45,.45);z-index:60;display:none;align-items:flex-end;justify-content:center}
-@media(min-width:600px){.modal-backdrop{align-items:center}}
-.modal-backdrop.open{display:flex}
-.modal{background:#fff;border-radius:18px 18px 0 0;padding:1.2rem;width:100%;max-width:480px}
-@media(min-width:600px){.modal{border-radius:18px}}
-.modal h3{margin-bottom:.6rem}
+/* Native <dialog>: top layer, echte focus-trap, Escape en focus-herstel gratis. */
+dialog.modal{border:none;border-radius:18px;padding:0;width:min(92vw,480px);background:#fff;color:var(--inkt)}
+dialog.modal::backdrop{background:rgba(38,48,45,.45)}
+dialog.modal .modal-inner{padding:1.2rem}
+dialog.modal h3{margin-bottom:.6rem}
 .veg-tag{color:var(--oke-t);font-weight:700;font-size:.7rem}
 .quiz-vraag{font-size:1.05rem;font-weight:600;margin:.6rem 0}
 .quiz-antwoord{background:var(--lichtgroen);border-radius:10px;padding:.8rem;margin:.6rem 0}
 .strip{display:flex;gap:5px;align-items:flex-end;margin-top:.5rem}
 .porties-groot{font-size:1.15rem;font-weight:700;min-width:2ch;text-align:center;font-family:'Lora',serif}
+/* ---------- toast / undo ---------- */
+#toast{
+  position:fixed;left:50%;transform:translateX(-50%) translateY(20px);opacity:0;pointer-events:none;
+  bottom:calc(var(--tabbar-h) + env(safe-area-inset-bottom,0px) + 12px);z-index:70;
+  background:var(--inkt);color:#fff;padding:.65rem 1rem;border-radius:12px;font-size:.85rem;
+  display:flex;align-items:center;gap:.8rem;max-width:min(92vw,420px);
+  box-shadow:0 4px 16px rgba(38,48,45,.3);transition:opacity .2s,transform .2s;
+}
+@media(min-width:900px){#toast{bottom:20px}}
+#toast.zichtbaar{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+#toast button{background:none;color:var(--terra);font-weight:700;padding:.3rem .5rem;min-height:36px}
+input.ongeldig{border-color:#c05560;outline:2px solid #c05560;outline-offset:1px}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
+:focus-visible{outline:2px solid var(--groen);outline-offset:2px}
+.tabbar :focus-visible,.sidebar :focus-visible{outline-color:var(--terra)}
 </style>
 </head>
 <body>
 <div class="app">
-  <aside class="sidebar" id="sidebar">
+  <aside class="sidebar">
     <div class="brand">LIFE<span>·</span>OS</div>
+    <nav id="side-nav" aria-label="Hoofdmenu"></nav>
   </aside>
   <main>
     <section class="tab" id="tab-vandaag"></section>
@@ -174,12 +201,11 @@ pre.sql{background:#26302D;color:#d7e3dd;padding:.9rem;border-radius:10px;font-s
     <section class="tab" id="tab-instellingen"></section>
   </main>
 </div>
-<nav class="tabbar" id="tabbar"></nav>
+<nav class="tabbar" id="tabbar" aria-label="Hoofdnavigatie"></nav>
 <div class="sheet-backdrop" id="sheet-backdrop" onclick="closeSheet()"></div>
 <div class="sheet" id="sheet"></div>
-<div class="modal-backdrop" id="modal-backdrop" onclick="if(event.target===this)closeModal()">
-  <div class="modal" id="modal"></div>
-</div>
+<dialog class="modal" id="modal" aria-labelledby="modal-titel"></dialog>
+<div id="toast" role="status" aria-live="polite"></div>
 <script>
 'use strict';
 /* ================= helpers ================= */
@@ -194,15 +220,26 @@ function daysBetween(a, b){ return Math.round((new Date(b+'T12:00:00') - new Dat
 function daysUntil(iso){ return daysBetween(todayISO(), iso); }
 function fmtDate(iso){ if(!iso) return ''; return new Date(iso+'T12:00:00').toLocaleDateString('nl-NL', {weekday:'short', day:'numeric', month:'short'}); }
 function fmtDateLang(iso){ return new Date(iso+'T12:00:00').toLocaleDateString('nl-NL', {weekday:'long', day:'numeric', month:'long'}); }
-function gapVoorDagen(dagen){ return Math.max(1, Math.round(dagen * 0.15)); } /* 10-20%-regel (Cepeda), 15% */
+/* Getrapte spacing-regel. Cepeda 2008: de optimale tussenpoos is geen vaste
+   fractie maar krimpt van ~20-40% van de resterende tijd bij korte horizons
+   naar ~5-10% bij een jaar. Drie treden benaderen die "ridgeline":
+   25% tot 3 weken, 15% tot 3 maanden, 8% daarboven. */
+function gapVoorDagen(dagen){
+  const f = dagen <= 21 ? 0.25 : dagen < 90 ? 0.15 : 0.08;
+  return Math.max(1, Math.round(dagen * f));
+}
 function weekStart(iso){ const d = new Date(iso+'T12:00:00'); const dow = (d.getDay()+6)%7; d.setDate(d.getDate()-dow); return isoOf(d); }
 function isOverdue(due, done){ return !!due && !done && due < todayISO(); }
 function euro(n){ return '€ ' + (Math.round(n*100)/100).toLocaleString('nl-NL', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+/* Floating tijden + expliciete ctz: Google pint het event dan op Nederlandse
+   wandkloktijd en doet zelf de zomertijd-berekening — zonder ctz zou de tijd
+   in de agenda-tijdzone van de kijker geïnterpreteerd worden. */
 function gcalLink(titel, datumISO, van, tot, details){
   const d = datumISO.replace(/-/g,'');
   const dates = d + 'T' + van.replace(':','') + '00/' + d + 'T' + tot.replace(':','') + '00';
   return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + encodeURIComponent(titel)
-    + '&dates=' + dates + '&details=' + encodeURIComponent(details || '');
+    + '&dates=' + dates + '&ctz=' + encodeURIComponent('Europe/Amsterdam')
+    + '&details=' + encodeURIComponent(details || '');
 }
 /* ================= seed-data ================= */
 const RONDE_NAMEN = {1:'The Basics', 2:'Comfort', 3:'World Kitchen', 4:'Fast & Fresh'};
@@ -251,6 +288,8 @@ const TECHNIEKEN = ['Retrieval','Spaced review','Interleaved oefenen','Self-expl
 const DOMEINEN = ['School','Werk','Business','Thuis'];
 /* ================= store ================= */
 const KEY = 'lifeos_v1';
+const SCHEMA_VERSION = 2;
+const COLLECTIONS = ['settings','freezer','grocery','training','study','tasks','money'];
 function defaults(){
   return {
     settings: {name:'', weekGoal:3, cycleDays:16, supabaseUrl:'', supabaseKey:'', gcalEmbedSrc:'', updated_at:''},
@@ -263,23 +302,48 @@ function defaults(){
   };
 }
 let S = load();
-function load(){
+/* Migratie: elke laadbeurt door dezelfde normalisatie, zodat oudere data-versies
+   en synced data van andere apparaten altijd een geldig schema opleveren.
+   Seed-gerechten worden per id gemerged: nieuwe gerechten komen erbij,
+   porties/lastEaten van de gebruiker blijven staan. */
+function migrate(st){
   const def = defaults();
+  for(const k of COLLECTIONS){
+    if(!st[k] || typeof st[k] !== 'object') st[k] = def[k];
+  }
+  const perId = new Map((st.freezer.dishes || []).map(d => [d.id, d]));
+  st.freezer.dishes = seedDishes().map(seed => {
+    const eigen = perId.get(seed.id);
+    return eigen ? Object.assign({}, seed, {porties:Math.max(0, Number(eigen.porties)||0), lastEaten:eigen.lastEaten||null}) : seed;
+  });
+  if(!Array.isArray(st.freezer.cookdayChecked) || st.freezer.cookdayChecked.length !== 8)
+    st.freezer.cookdayChecked = def.freezer.cookdayChecked;
+  if(![1,2,3,4].includes(st.freezer.nextRound)) st.freezer.nextRound = 1;
+  if(!st.grocery.lists) st.grocery.lists = seedGrocery();
+  for(const l of ['staples','r1','r2','r3','r4'])
+    if(!Array.isArray(st.grocery.lists[l]) || !st.grocery.lists[l].length) st.grocery.lists[l] = seedGrocery()[l];
+  if(!Array.isArray(st.training.log)) st.training.log = [];
+  for(const k of ['vakken','items','sessions']) if(!Array.isArray(st.study[k])) st.study[k] = [];
+  if(!Array.isArray(st.tasks.list)) st.tasks.list = [];
+  if(!Array.isArray(st.money.monthly)) st.money.monthly = [];
+  if(!st.money.business || typeof st.money.business !== 'object') st.money.business = {omzet:0, uitgaven:0};
+  st._v = SCHEMA_VERSION;
+  return st;
+}
+function load(){
   try{
     const raw = localStorage.getItem(KEY);
-    if(!raw) return def;
-    const st = JSON.parse(raw);
-    for(const k of Object.keys(def)){
-      if(!st[k]) st[k] = def[k];
-    }
-    if(!st.freezer.dishes || !st.freezer.dishes.length) st.freezer.dishes = seedDishes();
-    if(!st.freezer.cookdayChecked) st.freezer.cookdayChecked = def.freezer.cookdayChecked;
-    if(!st.grocery.lists) st.grocery.lists = seedGrocery();
-    for(const l of ['staples','r1','r2','r3','r4']) if(!st.grocery.lists[l] || !st.grocery.lists[l].length) st.grocery.lists[l] = seedGrocery()[l];
-    return st;
-  }catch(e){ return def; }
+    if(!raw) return migrate(defaults());
+    return migrate(JSON.parse(raw));
+  }catch(e){ return migrate(defaults()); }
 }
-function persist(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+let opslagFout = false;
+function persist(){
+  try{ localStorage.setItem(KEY, JSON.stringify(S)); opslagFout = false; }
+  catch(e){
+    if(!opslagFout){ opslagFout = true; toast('Opslaan mislukt — opslag vol of geblokkeerd. Maak een JSON-export!'); }
+  }
+}
 function save(coll){
   S[coll].updated_at = new Date().toISOString();
   persist();
@@ -302,34 +366,75 @@ function setSync(state, msg){
   if(dot){ dot.className = 'statusdot ' + (state==='gesynct'?'groen':state==='fout'?'rood':''); }
   if(txt){ txt.textContent = state==='gesynct' ? 'Gesynct met Supabase' : state==='fout' ? ('Sync-fout: '+msg) : 'Alleen lokaal opgeslagen'; }
 }
+/* Push-strategie: per collectie gedebounced (snel doorklikken = één upsert),
+   10s-timeout via AbortController, 3 pogingen met exponentiële backoff,
+   en een dirty-set die opnieuw gepusht wordt zodra de verbinding terugkomt. */
+const syncTimers = {};
+const dirty = new Set();
 function syncPush(coll){
   const cfg = sbCfg(); if(!cfg) return;
-  fetch(cfg.u + '/rest/v1/lifeos', {
-    method:'POST',
-    headers: Object.assign(sbHeaders(cfg.k), {'Prefer':'resolution=merge-duplicates'}),
-    body: JSON.stringify({id:coll, data:S[coll], updated_at:S[coll].updated_at}),
-  }).then(r => { if(r.ok) setSync('gesynct'); else setSync('fout', 'HTTP '+r.status); })
-    .catch(e => setSync('fout', e.message));
+  dirty.add(coll);
+  clearTimeout(syncTimers[coll]);
+  syncTimers[coll] = setTimeout(() => doPush(coll, 0), 600);
 }
+function doPush(coll, poging){
+  const cfg = sbCfg(); if(!cfg) return;
+  const ctrl = new AbortController();
+  const to = setTimeout(() => ctrl.abort(), 10000);
+  fetch(cfg.u + '/rest/v1/lifeos?on_conflict=id', {
+    method:'POST',
+    headers: Object.assign(sbHeaders(cfg.k), {'Prefer':'resolution=merge-duplicates,return=minimal'}),
+    body: JSON.stringify({id:coll, data:S[coll], updated_at:S[coll].updated_at}),
+    signal: ctrl.signal,
+  }).then(r => {
+    clearTimeout(to);
+    if(r.ok){ dirty.delete(coll); setSync('gesynct'); }
+    /* alleen retryen bij tijdelijke fouten (408/429/5xx); 4xx = request fixen, niet herhalen */
+    else if((r.status === 408 || r.status === 429 || r.status >= 500) && poging < 2){
+      setTimeout(() => doPush(coll, poging+1), 1000 * Math.pow(2, poging) + Math.random()*500);
+    }
+    else setSync('fout', 'HTTP '+r.status);
+  }).catch(e => {
+    clearTimeout(to);
+    if(poging < 2 && navigator.onLine !== false) setTimeout(() => doPush(coll, poging+1), 1000 * Math.pow(2, poging) + Math.random()*500);
+    else setSync('fout', e.name === 'AbortError' ? 'timeout' : e.message);
+  });
+}
+window.addEventListener('online', () => { for(const c of dirty) doPush(c, 0); if(sbCfg()) syncPull(); });
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'visible' && sbCfg()) syncPull();
+});
+/* lichte poll: alleen de watermark-query, elke 60 s, alleen als de app zichtbaar is */
+setInterval(() => { if(sbCfg() && document.visibilityState === 'visible') syncPull(); }, 60000);
 async function syncPull(){
   const cfg = sbCfg(); if(!cfg) return;
   try{
+    /* Goedkope watermark-check eerst (PostgREST kent geen ETag/304): alleen de
+       nieuwste updated_at ophalen; de volledige fetch alleen als er echt iets
+       nieuws op de server staat. */
+    const wr = await fetch(cfg.u + '/rest/v1/lifeos?select=updated_at&order=updated_at.desc&limit=1', {headers: sbHeaders(cfg.k)});
+    if(wr.ok){
+      const w = await wr.json();
+      const serverTop = (w[0] && w[0].updated_at) || '';
+      const lokaalTop = COLLECTIONS.map(k => S[k].updated_at || '').sort().pop() || '';
+      if(serverTop && serverTop <= lokaalTop && dirty.size === 0){ setSync('gesynct'); return; }
+    }
     const r = await fetch(cfg.u + '/rest/v1/lifeos?select=*', {headers: sbHeaders(cfg.k)});
     if(!r.ok){ setSync('fout', 'HTTP '+r.status); return; }
     const rows = await r.json();
     let changed = false;
     for(const row of rows){
-      if(S[row.id] !== undefined && row.data && row.updated_at){
+      if(COLLECTIONS.includes(row.id) && row.data && row.updated_at){
         const lokaal = S[row.id].updated_at || '';
         if(row.updated_at > lokaal){ S[row.id] = row.data; S[row.id].updated_at = row.updated_at; changed = true; }
       }
     }
     /* lokaal nieuwere collecties terugpushen */
-    for(const k of Object.keys(S)){
+    for(const k of COLLECTIONS){
       const srv = rows.find(x => x.id === k);
       if(S[k].updated_at && (!srv || S[k].updated_at > (srv.updated_at||''))) syncPush(k);
     }
-    if(changed){ persist(); renderAll(); }
+    if(changed){ S = migrate(S); persist(); renderAll(); }
     setSync('gesynct');
   }catch(e){ setSync('fout', e.message); }
 }
@@ -358,7 +463,7 @@ const TABS = [
 const HOOFDTABS = ['vandaag','eten','sport','leren','taken'];
 let actieveTab = 'vandaag';
 function bouwNav(){
-  const side = $('#sidebar');
+  const side = $('#side-nav');
   for(const t of TABS){
     const b = document.createElement('button');
     b.className = 'side-btn'; b.dataset.tab = t.id;
@@ -393,17 +498,56 @@ function bouwNav(){
 function showTab(id){
   actieveTab = id;
   document.querySelectorAll('.tab').forEach(el => el.classList.toggle('active', el.id === 'tab-'+id));
-  document.querySelectorAll('.side-btn').forEach(el => el.classList.toggle('active', el.dataset.tab === id));
-  document.querySelectorAll('.tab-btn').forEach(el => el.classList.toggle('active', el.dataset.tab === id));
+  /* aria-current="page" is het juiste "je bent hier"-signaal voor app-navigatie
+     (nav + current, níét role=tablist — dat patroon is voor in-page widgets). */
+  document.querySelectorAll('.side-btn, .tab-btn').forEach(el => {
+    const actief = el.dataset.tab === id;
+    el.classList.toggle('active', actief);
+    if(actief) el.setAttribute('aria-current', 'page'); else el.removeAttribute('aria-current');
+  });
   const inMeer = ['geld','agenda','instellingen'].includes(id);
   const mb = $('#meer-btn'); if(mb) mb.classList.toggle('active', inMeer);
   window.scrollTo(0,0);
 }
 function openSheet(){ $('#sheet').classList.add('open'); $('#sheet-backdrop').classList.add('open'); }
 function closeSheet(){ $('#sheet').classList.remove('open'); $('#sheet-backdrop').classList.remove('open'); }
-/* ================= modal ================= */
-function openModal(html){ $('#modal').innerHTML = html; $('#modal-backdrop').classList.add('open'); }
-function closeModal(){ $('#modal-backdrop').classList.remove('open'); }
+/* ================= modal (native <dialog>) ================= */
+function openModal(html){
+  const d = $('#modal');
+  d.innerHTML = '<div class="modal-inner">' + html + '</div>';
+  d.showModal();
+  const eerste = d.querySelector('input,select');
+  if(eerste) eerste.focus();
+}
+function closeModal(){ $('#modal').close(); }
+/* light dismiss: klik op de backdrop (target = de dialog zelf, dankzij .modal-inner) */
+$('#modal').addEventListener('click', e => { if(e.target === $('#modal')) closeModal(); });
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && !$('#modal').open) closeSheet(); });
+/* ================= toast + undo ================= */
+let toastTimer = null;
+let undoActie = null;
+function toast(msg, undo){
+  const el = $('#toast');
+  undoActie = undo || null;
+  el.innerHTML = esc(msg) + (undo ? ' <button onclick="doeUndo()">Ongedaan maken</button>' : '');
+  el.classList.add('zichtbaar');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.classList.remove('zichtbaar'); undoActie = null; }, undo ? 6000 : 3500);
+}
+function doeUndo(){
+  if(undoActie){ const f = undoActie; undoActie = null; f(); }
+  $('#toast').classList.remove('zichtbaar');
+}
+/* Inline validatie: markeer het veld even i.p.v. stil niets doen. */
+function eis(sel){
+  const el = $(sel);
+  if(el && el.value.trim()){ el.classList.remove('ongeldig'); el.removeAttribute('aria-invalid'); return el.value.trim(); }
+  if(el){
+    el.classList.add('ongeldig'); el.setAttribute('aria-invalid', 'true'); el.focus();
+    setTimeout(() => { el.classList.remove('ongeldig'); el.removeAttribute('aria-invalid'); }, 1800);
+  }
+  return null;
+}
 /* ================= Vandaag ================= */
 function trainingenDezeWeek(){
   const start = weekStart(todayISO());
@@ -477,7 +621,7 @@ function renderVandaag(){
 }
 /* quick-add modals */
 function modalTaak(){
-  openModal(`<h3>Nieuwe taak</h3>
+  openModal(`<h3 id="modal-titel">Nieuwe taak</h3>
     <input id="m-titel" placeholder="Wat moet er gebeuren?" style="width:100%">
     <div class="formrij">
       <select id="m-domein">${DOMEINEN.map(d => '<option>'+d+'</option>').join('')}</select>
@@ -488,12 +632,12 @@ function modalTaak(){
   $('#m-titel').focus();
 }
 function quickTaak(){
-  const titel = $('#m-titel').value.trim(); if(!titel) return;
+  const titel = eis('#m-titel'); if(!titel) return;
   S.tasks.list.push({id:uid(), titel, domein:$('#m-domein').value, due:$('#m-due').value || '', done:false});
   closeModal(); save('tasks');
 }
 function modalTraining(){
-  openModal(`<h3>Training loggen</h3>
+  openModal(`<h3 id="modal-titel">Training loggen</h3>
     <div class="formrij">
       <input id="m-tdate" type="date" value="${todayISO()}">
       <select id="m-ttype"><option>kracht</option><option>cardio</option><option>anders</option></select>
@@ -514,7 +658,7 @@ function modalPortie(){
       <div class="groei"><div class="titel">${esc(d.naam)}</div><div class="sub">${d.porties} porties</div></div>
       <button class="knop klein terra" onclick="portieGegeten('${d.id}');closeModal()">gegeten ✓</button>
     </div>`).join('') : '<div class="leeg">De vriezer is leeg.</div>';
-  openModal(`<h3>Welke portie heb je gegeten?</h3>${rows}
+  openModal(`<h3 id="modal-titel">Welke portie heb je gegeten?</h3>${rows}
     <div class="formrij"><button class="knop licht" style="flex:1" onclick="closeModal()">Sluiten</button></div>`);
 }
 /* ================= Eten ================= */
@@ -545,7 +689,7 @@ function renderEten(){
   const lijstDetails = (key, naam) => {
     const l = S.grocery.lists[key];
     const done = l.filter(x => x.checked).length;
-    return `<details class="card" ${key==='r'+S.freezer.nextRound ? 'open':''}><summary>${naam} <span class="badge b-grijs">${done}/${l.length}</span></summary>
+    return `<details class="card" data-key="lijst-${key}" ${key==='r'+S.freezer.nextRound ? 'open':''}><summary>${naam} <span class="badge b-grijs">${done}/${l.length}</span></summary>
       ${l.map((x,i) => `<div class="rij ${x.checked?'klaar':''}">
         <input type="checkbox" class="chk" ${x.checked?'checked':''} onchange="toggleGrocery('${key}',${i})">
         <div class="groei titel">${esc(x.item)}</div></div>`).join('')}
@@ -575,22 +719,23 @@ function renderEten(){
     ${lijstDetails('r2','Ronde 2 vers — Comfort')}
     ${lijstDetails('r3','Ronde 3 vers — World Kitchen')}
     ${lijstDetails('r4','Ronde 4 vers — Fast & Fresh')}
-    <details class="card"><summary>Kookdag-draaiboek (± 2¾ uur) <span class="badge b-grijs">${kd.filter(Boolean).length}/8</span></summary>
+    <details class="card" data-key="kookdag"><summary>Kookdag-draaiboek (± 2¾ uur) <span class="badge b-grijs">${kd.filter(Boolean).length}/8</span></summary>
       ${KOOKDAG_STAPPEN.map(([tijd, stap], i) => `<div class="rij ${kd[i]?'klaar':''}">
         <input type="checkbox" class="chk" ${kd[i]?'checked':''} onchange="toggleKookdag(${i})">
         <div class="groei"><div class="titel">${esc(stap)}</div><div class="sub">${tijd}</div></div></div>`).join('')}
       <div class="formrij"><button class="knop klein licht" onclick="resetKookdag()">Draaiboek resetten</button>
-      <a class="knop klein" style="text-decoration:none;display:inline-flex;align-items:center" target="_blank" rel="noopener"
+      <a class="knop klein" style="text-decoration:none;display:inline-flex;align-items:center" target="_blank" rel="noopener noreferrer"
         href="${gcalLink('Kookronde '+S.freezer.nextRound+' — '+RONDE_NAMEN[S.freezer.nextRound], kook || todayISO(), '14:00','16:30','LIFE OS kookdag: 4 gerechten, draaiboek in de app.')}">📅 Plan in agenda</a></div>
     </details>
-    <details class="card soft"><summary>Regels (Voedingscentrum)</summary>
+    <details class="card soft" data-key="regels"><summary>Regels (Voedingscentrum)</summary>
       <ul style="padding-left:1.2rem;font-size:.88rem;margin-top:.5rem">
         <li>Saus invriezen, koolhydraten (rijst/pasta/puree) altijd vers koken</li>
         <li>Plat invriezen in diepvrieszakken — sneller bevroren, sneller ontdooid</li>
         <li>Binnen 2 uur na koken de koeling of vriezer in · koelkast (4°C) max 2 dagen</li>
         <li>Vriezer (−18°C): 3 maanden houdbaar (kokossauzen 2–3 mnd; schiften is cosmetisch — gladroeren)</li>
         <li>Ontdooien in koelkast of magnetron, nooit op het aanrecht · ontdooid = binnen 24 uur opeten</li>
-        <li>Opwarmen door-en-door heet (≥75°C) · nooit opnieuw invriezen zonder eerst volledig te verhitten</li>
+        <li>Opwarmen stomend heet, door-en-door (≥75°C kerntemperatuur)</li>
+        <li>Ontdooide of opgewarmde maaltijdrestjes <strong>nooit opnieuw invriezen</strong> — restje weggooien. (Alleen rauwe diepvriesingrediënten die je tot een gerecht doorverhit, mag je daarna één keer invriezen.)</li>
         <li>Twijfel je? Weggooien.</li>
       </ul>
     </details>`;
@@ -669,7 +814,11 @@ function addTraining(){
   save('training');
 }
 function trainingKlaar(id){ const t = S.training.log.find(x => x.id === id); if(t){ t.done = !t.done; save('training'); } }
-function delTraining(id){ S.training.log = S.training.log.filter(x => x.id !== id); save('training'); }
+function delTraining(id){
+  const t = S.training.log.find(x => x.id === id); if(!t) return;
+  S.training.log = S.training.log.filter(x => x.id !== id); save('training');
+  toast('Training verwijderd', () => { S.training.log.push(t); save('training'); });
+}
 /* ================= Leren ================= */
 let quiz = null; /* {queue:[ids], idx, toonAntwoord} */
 function vakGap(vakId){
@@ -728,7 +877,7 @@ function renderLeren(){
         <span class="badge b-terra">${Math.round(p*100)}%</span>
         <div class="groei"><div class="titel">Moment ${i+1}: ${fmtDate(datum)}</div>
         <div class="sub">${i === 0 ? 'vandaag beginnen' : Math.round(R*p) + ' dagen vanaf nu'}</div></div>
-        <a class="knop klein licht" style="text-decoration:none" target="_blank" rel="noopener"
+        <a class="knop klein licht" style="text-decoration:none" target="_blank" rel="noopener noreferrer"
           href="${gcalLink('Leren: '+spacingVak.naam+' (moment '+(i+1)+'/4)', datum, '19:00','20:00','Spaced-practice-moment uit LIFE OS. Actief ophalen, niet herlezen.')}">📅 zet in agenda</a>
       </div>`;
     }).join('');
@@ -771,10 +920,10 @@ function renderLeren(){
         <input id="vak-datum" type="date">
         <button class="knop" onclick="addVak()">+ vak</button>
       </div>
-      <div class="hint">Aanbevolen tussenpoos = 10–20% van de tijd tot het tentamen (Cepeda 2008). De app rekent met 15%.</div>
+      <div class="hint">Aanbevolen tussenpoos schaalt mee met de tijd tot het tentamen (Cepeda 2008): 25% als het binnen 3 weken is, 15% tot 3 maanden, 8% daarboven.</div>
     </div>
     <div class="card"><h2>Relearning-tracker</h2>
-      <div class="hint" style="margin-bottom:.5rem">Doel: elk item 3× correct ophalen (Rawson &amp; Dunlosky 2013 — 68% vs. 26% retentie weken later).</div>
+      <div class="hint" style="margin-bottom:.5rem">Doel: elk item 3× correct ophalen — en die successen spreiden: 3 gespreide ophalingen verslaan 3 op één dag (68% vs. 26% na een week; Rawson et al., in Rawson &amp; Dunlosky 2022).</div>
       ${itemsHtml}
       <div class="formrij">
         <select id="item-vak">${vakOpties || '<option value="">eerst een vak toevoegen</option>'}</select>
@@ -789,7 +938,7 @@ function renderLeren(){
       <div class="formrij"><select id="spacing-vak" onchange="window._spacingVak=this.value;renderLeren()">
         ${S.study.vakken.map(v => `<option value="${v.id}" ${spacingVak && spacingVak.id === v.id ? 'selected':''}>${esc(v.naam)}</option>`).join('') || '<option value="">geen vakken</option>'}
       </select></div>
-      <div class="hint" style="margin-bottom:.4rem">Vier aanraakmomenten op 0%, 40%, 70% en 90% van de resterende tijd tot het tentamen.</div>
+      <div class="hint" style="margin-bottom:.4rem">Vier aanraakmomenten (0%, 40%, 70%, 90% van de resterende tijd). Het belangrijkste is vroeg beginnen — de exacte latere spreiding maakt minder uit dan hem überhaupt volhouden (Karpicke &amp; Roediger 2007; Kang e.a. 2014).</div>
       ${spacingHtml}
     </div>
     <div class="card"><h2>Sessielog</h2>
@@ -806,39 +955,51 @@ function renderLeren(){
           <div class="sub">${fmtDate(s.date)} · ${esc(s.techniek)}${s.techniek === 'Herlezen (betrapt)' ? ' 😅':''}</div></div></div>`;
       }).join('') : '<div class="leeg">Nog geen leersessies gelogd.</div>'}
     </div>
-    <details class="card soft"><summary>Cheat-sheet: wat werkt echt</summary>
+    <details class="card soft" data-key="cheat"><summary>Cheat-sheet: wat werkt echt</summary>
       <ul style="padding-left:1.2rem;font-size:.88rem;margin-top:.5rem">
         <li><strong>Toets jezelf</strong> in plaats van herlezen — sterkste techniek die er is (Adesope 2017, Yang 2021). Het voelt slechter, en juist dat is het teken dat het werkt.</li>
-        <li><strong>Spreid je sessies</strong>: tussenpoos ≈ 10–20% van de tijd tot de toets (Cepeda). Te lang gat kost weinig, te kort kost veel.</li>
-        <li><strong>3× correct ophalen</strong> per item, en later opnieuw — successive relearning is een vol cijferpunt winst (Rawson &amp; Dunlosky 2013).</li>
+        <li><strong>Spreid je sessies</strong>: tussenpoos ≈ 25% van de resterende tijd bij korte horizons, minder naarmate de toets verder weg is (Cepeda 2008). Te lang gat kost weinig, te kort kost veel.</li>
+        <li><strong>3× correct ophalen</strong> per item, gespreid over sessies, en later opnieuw — successive relearning gaf in echte cursussen ~een vol cijferpunt winst (Rawson, Dunlosky &amp; Sciartelli 2013).</li>
         <li><strong>Mix oefentypes</strong> bij wiskunde-achtige vakken (interleaving, Rohrer 2020) — werkt niet voor woordjes.</li>
         <li><strong>Leg jezelf uit wáárom</strong> een stap klopt (self-explanation, Bisra 2018); parafraseren telt niet. Herlezen, markeren en leerstijlen: overslaan — cramming is een lening tegen woekerrente.</li>
       </ul>
     </details>`;
 }
 function addVak(){
-  const naam = $('#vak-naam').value.trim(); if(!naam) return;
+  const naam = eis('#vak-naam'); if(!naam) return;
   S.study.vakken.push({id:uid(), naam, examDate:$('#vak-datum').value || ''});
   save('study');
 }
 function setExamDate(id, v){ const vak = S.study.vakken.find(x => x.id === id); if(vak){ vak.examDate = v; save('study'); } }
 function delVak(id){
-  if(!confirm('Vak verwijderen? Bijbehorende leeritems blijven staan.')) return;
+  const v = S.study.vakken.find(x => x.id === id); if(!v) return;
   S.study.vakken = S.study.vakken.filter(x => x.id !== id); save('study');
+  toast('Vak "'+v.naam+'" verwijderd (leeritems blijven staan)', () => { S.study.vakken.push(v); save('study'); });
 }
 function addItem(){
-  const vraag = $('#item-vraag').value.trim(); if(!vraag) return;
+  const vraag = eis('#item-vraag'); if(!vraag) return;
   S.study.items.push({id:uid(), vak:$('#item-vak').value, vraag, antwoord:$('#item-antwoord').value.trim(), sessies:[], lastSession:'', nextReview:''});
   save('study');
 }
-function delItem(id){ S.study.items = S.study.items.filter(x => x.id !== id); save('study'); }
+function delItem(id){
+  const it = S.study.items.find(x => x.id === id); if(!it) return;
+  S.study.items = S.study.items.filter(x => x.id !== id); save('study');
+  toast('Leeritem verwijderd', () => { S.study.items.push(it); save('study'); });
+}
 function sessieResultaat(id, res){
   const it = S.study.items.find(x => x.id === id); if(!it) return;
   it.sessies = it.sessies || [];
   it.sessies.push(res);
   if(it.sessies.length > 6) it.sessies = it.sessies.slice(-6);
   it.lastSession = todayISO();
-  it.nextReview = addDays(todayISO(), vakGap(it.vak));
+  /* Fout = korte lus (morgen opnieuw); goed = de vak-tussenpoos.
+     Review nooit ná het tentamen plannen. */
+  let gap = res === 'fout' ? 1 : vakGap(it.vak);
+  let review = addDays(todayISO(), gap);
+  const vak = S.study.vakken.find(v => v.id === it.vak);
+  if(vak && vak.examDate && review >= vak.examDate && vak.examDate > todayISO())
+    review = addDays(vak.examDate, -1);
+  it.nextReview = review;
   save('study');
 }
 function overhoorQueue(){
@@ -867,8 +1028,8 @@ function quizAntwoord(res){
   renderLeren();
 }
 function addSessie(){
-  const min = Number($('#ses-min').value);
-  if(!min) return;
+  const min = Number(eis('#ses-min'));
+  if(!min || min < 1) return;
   S.study.sessions.push({date:$('#ses-date').value || todayISO(), vak:$('#ses-vak').value, minuten:min, techniek:$('#ses-tech').value});
   save('study');
 }
@@ -912,15 +1073,19 @@ function renderTaken(){
     <div class="card">
       ${open.length ? open.map(rij).join('') : '<div class="leeg">Geen open taken… verdacht rustig.</div>'}
     </div>
-    ${klaar.length ? `<details class="card"><summary>Afgerond (${klaar.length})</summary>${klaar.map(rij).join('')}</details>` : ''}`;
+    ${klaar.length ? `<details class="card" data-key="taken-klaar"><summary>Afgerond (${klaar.length})</summary>${klaar.map(rij).join('')}</details>` : ''}`;
 }
 function addTaak(){
-  const titel = $('#taak-titel').value.trim(); if(!titel) return;
+  const titel = eis('#taak-titel'); if(!titel) return;
   S.tasks.list.push({id:uid(), titel, domein:$('#taak-domein').value, due:$('#taak-due').value || '', done:false});
   save('tasks');
 }
 function taakKlaar(id){ const t = S.tasks.list.find(x => x.id === id); if(t){ t.done = !t.done; save('tasks'); } }
-function delTaak(id){ S.tasks.list = S.tasks.list.filter(x => x.id !== id); save('tasks'); }
+function delTaak(id){
+  const t = S.tasks.list.find(x => x.id === id); if(!t) return;
+  S.tasks.list = S.tasks.list.filter(x => x.id !== id); save('tasks');
+  toast('Taak verwijderd', () => { S.tasks.list.push(t); save('tasks'); });
+}
 /* ================= Geld ================= */
 function renderGeld(){
   const m = S.money.monthly;
@@ -959,11 +1124,14 @@ function renderGeld(){
     </div>`;
 }
 function addKost(){
-  const item = $('#kost-item').value.trim(); if(!item) return;
+  const item = eis('#kost-item'); if(!item) return;
   S.money.monthly.push({item, bedrag:Number($('#kost-bedrag').value)||0, vast:$('#kost-vast').value === '1'});
   save('money');
 }
-function delKost(i){ S.money.monthly.splice(i, 1); save('money'); }
+function delKost(i){
+  const [x] = S.money.monthly.splice(i, 1); save('money');
+  if(x) toast('Kostenpost verwijderd', () => { S.money.monthly.splice(i, 0, x); save('money'); });
+}
 function setBusiness(k, v){ S.money.business[k] = Number(v)||0; save('money'); }
 /* ================= Agenda ================= */
 function renderAgenda(){
@@ -972,12 +1140,12 @@ function renderAgenda(){
   let inhoud;
   if(src && !isFile){
     inhoud = `<iframe class="agenda-frame" src="${esc(src)}" title="Google Agenda"></iframe>
-      <div class="hint">Laadt de agenda niet? Log in bij Google in deze browser, of gebruik de knop hieronder.</div>
-      <div class="formrij"><a class="knop licht" style="text-decoration:none" href="https://calendar.google.com" target="_blank" rel="noopener">Open Google Agenda ↗</a></div>`;
+      <div class="hint">Laadt de agenda niet? Een privé-agenda vereist Google-login in deze browser; in de beginscherm-app op iOS blokkeert Apple die cookies — zet de agenda dan op "openbaar (alleen vrij/bezet of details)" in Google Agenda, of gebruik de knop hieronder.</div>
+      <div class="formrij"><a class="knop licht" style="text-decoration:none" href="https://calendar.google.com" target="_blank" rel="noopener noreferrer">Open Google Agenda ↗</a></div>`;
   } else {
     inhoud = `<div class="card soft" style="text-align:center;padding:2rem 1rem">
       <p style="margin-bottom:.8rem">${isFile ? 'De agenda-embed werkt niet op een lokaal geopend bestand (file://).' : 'Nog geen embed-URL ingesteld — zie Instellingen → Google Agenda.'}</p>
-      <a class="knop" style="text-decoration:none" href="https://calendar.google.com" target="_blank" rel="noopener">Open Google Agenda ↗</a>
+      <a class="knop" style="text-decoration:none" href="https://calendar.google.com" target="_blank" rel="noopener noreferrer">Open Google Agenda ↗</a>
     </div>`;
   }
   const kook = volgendeKookdatum() || todayISO();
@@ -996,9 +1164,9 @@ function renderAgenda(){
     </div>
     <div class="card"><h2>Snelkoppelingen</h2>
       <div class="formrij">
-        <a class="knop licht" style="text-decoration:none" target="_blank" rel="noopener"
+        <a class="knop licht" style="text-decoration:none" target="_blank" rel="noopener noreferrer"
           href="${gcalLink('Kookronde '+S.freezer.nextRound+' — '+RONDE_NAMEN[S.freezer.nextRound], kook, '14:00','16:30','LIFE OS kookdag — draaiboek staat in de app.')}">🍳 Kookronde (2½ u)</a>
-        <a class="knop licht" style="text-decoration:none" target="_blank" rel="noopener"
+        <a class="knop licht" style="text-decoration:none" target="_blank" rel="noopener noreferrer"
           href="${gcalLink('Training', addDays(todayISO(),1), '17:00','18:00','Gepland via LIFE OS.')}">🏋️ Training (morgen)</a>
       </div>
       <div class="hint">Spacing-momenten plan je vanuit de Leren-tab.</div>
@@ -1009,7 +1177,7 @@ function maakEvent(){
   const datum = $('#ev-datum').value || todayISO();
   const van = $('#ev-van').value || '19:00';
   const tot = $('#ev-tot').value || '20:00';
-  window.open(gcalLink(titel, datum, van, tot, $('#ev-notitie').value.trim()), '_blank', 'noopener');
+  window.open(gcalLink(titel, datum, van, tot, $('#ev-notitie').value.trim()), '_blank', 'noopener,noreferrer');
 }
 /* ================= Instellingen ================= */
 const SB_SQL = `create table if not exists lifeos (
@@ -1035,7 +1203,7 @@ function renderInstellingen(){
       <label class="veldlabel" for="set-sbkey">Anon key</label>
       <input id="set-sbkey" placeholder="eyJ…" value="${esc(S.settings.supabaseKey)}" onchange="setSetting('supabaseKey',this.value)" style="width:100%">
       <div class="formrij"><button class="knop" onclick="testSupabase()">Test verbinding</button><span id="sb-test-result" style="align-self:center"></span></div>
-      <details style="margin-top:.7rem"><summary>Eenmalige setup: SQL voor de Supabase-editor</summary>
+      <details style="margin-top:.7rem" data-key="sql"><summary>Eenmalige setup: SQL voor de Supabase-editor</summary>
         <pre class="sql" id="sb-sql">${esc(SB_SQL)}</pre>
         <div class="formrij"><button class="knop klein licht" onclick="navigator.clipboard&&navigator.clipboard.writeText(document.getElementById('sb-sql').textContent)">Kopieer SQL</button></div>
       </details>
@@ -1079,12 +1247,12 @@ function importJSON(input){
     try{
       const data = JSON.parse(rd.result);
       if(!data.settings || !data.freezer) throw new Error('Geen geldig LIFE OS-bestand');
-      S = data;
-      for(const k of Object.keys(S)) S[k].updated_at = new Date().toISOString();
+      S = migrate(data);
+      for(const k of COLLECTIONS) S[k].updated_at = new Date().toISOString();
       persist(); renderAll();
-      for(const k of Object.keys(S)) syncPush(k);
-      alert('Import gelukt ✓');
-    }catch(e){ alert('Import mislukt: ' + e.message); }
+      for(const k of COLLECTIONS) syncPush(k);
+      toast('Import gelukt ✓');
+    }catch(e){ toast('Import mislukt: ' + e.message); }
   };
   rd.readAsText(f);
 }
@@ -1094,13 +1262,32 @@ function resetAll(){
   location.reload();
 }
 /* ================= render & init ================= */
+/* Re-render behoudt focus (incl. cursorpositie) en scrollpositie,
+   zodat opslaan-na-elke-mutatie niet stoort tijdens het typen. */
 function renderAll(){
+  const ae = document.activeElement;
+  const focusId = ae && ae.id && !$('#modal').open ? ae.id : null;
+  let sel = null;
+  try{ if(focusId && ae.selectionStart != null) sel = ae.selectionStart; }catch(e){}
+  const sx = window.scrollX, sy = window.scrollY;
+  const openDetails = [...document.querySelectorAll('main details[open]')].map((d,i) => d.dataset.key).filter(Boolean);
   renderVandaag(); renderEten(); renderSport(); renderLeren(); renderTaken(); renderGeld(); renderAgenda(); renderInstellingen();
+  for(const key of openDetails){
+    const d = document.querySelector('main details[data-key="'+key+'"]');
+    if(d) d.open = true;
+  }
+  if(focusId){
+    const el = document.getElementById(focusId);
+    if(el){ el.focus({preventScroll:true}); try{ if(sel != null) el.setSelectionRange(sel, sel); }catch(e){} }
+  }
+  window.scrollTo(sx, sy);
 }
 bouwNav();
 renderAll();
 showTab('vandaag');
 if(sbCfg()) syncPull();
+/* Vraag persistente opslag aan (best effort; beschermt tegen storage-eviction). */
+if(navigator.storage && navigator.storage.persist){ navigator.storage.persist().catch(() => {}); }
 /* voor tests & console */
 window.lifeos = {gapVoorDagen, addDays, daysBetween, daysUntil, isOverdue, weekStart, volgendeKookdatum, avondetenSuggestie, get store(){ return S; }};
 </script>
