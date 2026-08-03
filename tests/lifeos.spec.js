@@ -54,16 +54,23 @@ test('training toevoegen telt mee voor de week', async ({ page }) => {
   expect(wk).toContain('1');
 });
 
-test('portie +1 en portie gegeten (met lastEaten)', async ({ page }) => {
+test('portie +1 en portie gegeten (met lastEaten + maaltijdlog)', async ({ page }) => {
   await page.goto(APP);
-  await page.evaluate(() => window.showTab('eten'));
+  await page.evaluate(() => { window.showTab('eten'); etenView = 'vriezer'; renderEten(); });
   const eerste = page.locator('#tab-eten .card').nth(1).locator('.rij').first();
   await eerste.locator('button[aria-label="portie erbij"]').click();
   await expect(page.locator('#tab-eten .card').nth(1).locator('.rij').first().locator('.porties-groot')).toHaveText('1');
   await page.locator('#tab-eten .card').nth(1).locator('.rij').first().locator('button[title="portie gegeten"]').click();
   await expect(page.locator('#tab-eten .card').nth(1).locator('.rij').first().locator('.porties-groot')).toHaveText('0');
-  const lastEaten = await page.evaluate(() => window.lifeos.store.freezer.dishes[0].lastEaten);
-  expect(lastEaten).toBeTruthy();
+  const st = await page.evaluate(() => ({
+    lastEaten: window.lifeos.store.freezer.dishes[0].lastEaten,
+    meals: window.lifeos.store.nutrition.meals,
+  }));
+  expect(st.lastEaten).toBeTruthy();
+  // vriezerportie is automatisch als maaltijd gelogd, met eiwit uit de macrotabel
+  expect(st.meals.length).toBe(1);
+  expect(st.meals[0].naam).toBe('Chili con carne');
+  expect(st.meals[0].eiwit).toBeGreaterThan(20);
 });
 
 test('overhoormodus: één ronde vraag → antwoord → goed', async ({ page }) => {
@@ -97,7 +104,7 @@ test('persistentie: data blijft na herladen', async ({ page }) => {
   await page.evaluate(() => window.showTab('taken'));
   await page.fill('#taak-titel', 'Blijf-ik-staan-taak');
   await page.click('#tab-taken button:has-text("+ taak")');
-  await page.evaluate(() => window.showTab('eten'));
+  await page.evaluate(() => { window.showTab('eten'); etenView = 'vriezer'; renderEten(); });
   await page.locator('#tab-eten .card').nth(1).locator('.rij').first()
     .locator('button[aria-label="portie erbij"]').click();
   await page.reload();
@@ -144,7 +151,7 @@ test('datumlogica: spacing-gap, kookronde, achterstallig', async ({ page }) => {
 
 test('kookronde gekookt: 4 porties, datum vandaag, ronde schuift door', async ({ page }) => {
   await page.goto(APP);
-  await page.evaluate(() => window.showTab('eten'));
+  await page.evaluate(() => { window.showTab('eten'); etenView = 'vriezer'; renderEten(); });
   await page.click('#tab-eten button:has-text("gekookt ✓")');
   const st = await page.evaluate(() => ({
     r1: window.lifeos.store.freezer.dishes.filter((d) => d.ronde === 1).map((d) => d.porties),
@@ -296,6 +303,98 @@ test('statische bestanden: PNG-iconen en manifest aanwezig en gelinkt', async ({
   await page.goto(APP);
   await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute('href', 'apple-touch-icon.png');
   await expect(page.locator('link[rel="manifest"]')).toHaveAttribute('href', 'manifest.webmanifest');
+});
+
+test('kookboek: zoeken, filteren en receptdialog met macro’s', async ({ page }) => {
+  await page.goto(APP);
+  await page.evaluate(() => window.showTab('eten'));
+  // kookboek is de standaardweergave; filter op kruidenmixen
+  await page.click('#tab-eten .filterrij button:has-text("Kruidenmixen")');
+  await expect(page.locator('#tab-eten')).toContainText('Cajun-mix');
+  await expect(page.locator('#tab-eten')).toContainText('Shoarma-mix');
+  // zoeken over alle categorieën heen
+  await page.click('#tab-eten .filterrij button:has-text("Alles")');
+  await page.fill('#kook-zoek', 'teriyaki');
+  await expect(page.locator('#tab-eten .card').first()).toContainText('Teriyakisaus');
+  // dialog met macro's en batchinfo
+  await page.evaluate(() => { kookZoek = ''; renderAll(); });
+  await page.click('#tab-eten .rij:has-text("Gegrilde kipfilet") .groei');
+  await expect(page.locator('dialog#modal')).toContainText('58 g');
+  await expect(page.locator('dialog#modal')).toContainText('Bereiding');
+  await page.click('dialog#modal button:has-text("Sluiten")');
+  // kruidenmix-dialog toont houdbaarheid en dosering
+  await page.click('#tab-eten .rij:has-text("Cajun-mix") .groei');
+  await expect(page.locator('dialog#modal')).toContainText('Houdbaar');
+  await expect(page.locator('dialog#modal')).toContainText('6 mnd');
+});
+
+test('maaltijd loggen uit kookboek telt op in dagtotalen', async ({ page }) => {
+  await page.goto(APP);
+  await page.evaluate(() => window.showTab('eten'));
+  await page.click('#tab-eten .rij:has-text("Gegrilde kipfilet") .groei');
+  await page.fill('#log-porties', '2');
+  await page.click('dialog#modal button:has-text("Gegeten")');
+  const tot = await page.evaluate(() => window.lifeos.dagTotalen(new Date().toISOString().slice(0, 10)));
+  expect(tot.eiwit).toBe(116); // 58 × 2 porties
+  expect(tot.kcal).toBe(640);
+  // zichtbaar in de Gegeten-weergave
+  await page.click('#tab-eten .filterrij button:has-text("Gegeten")');
+  await expect(page.locator('#tab-eten')).toContainText('Gegrilde kipfilet');
+  await expect(page.locator('#tab-eten')).toContainText('2×');
+});
+
+test('gewicht loggen: eiwitdoel, trend en dagelijkse upsert', async ({ page }) => {
+  await page.goto(APP);
+  await page.evaluate(() => window.showTab('sport'));
+  await page.fill('#gewicht-kg', '70');
+  await page.click('#tab-sport button:has-text("+ weging")');
+  let r = await page.evaluate(() => ({
+    doel: window.lifeos.eiwitDoel(),
+    n: window.lifeos.store.nutrition.weight.length,
+  }));
+  expect(r.doel).toBe(126); // 70 kg × 1,8 g/kg
+  expect(r.n).toBe(1);
+  // tweede weging op dezelfde dag vervangt (upsert), geen tweede rij
+  await page.fill('#gewicht-kg', '70.4');
+  await page.click('#tab-sport button:has-text("+ weging")');
+  r = await page.evaluate(() => ({
+    n: window.lifeos.store.nutrition.weight.length,
+    kg: window.lifeos.store.nutrition.weight[0].kg,
+  }));
+  expect(r.n).toBe(1);
+  expect(r.kg).toBe(70.4);
+});
+
+test('7-daags gemiddelde en trend per week', async ({ page }) => {
+  await page.goto(APP);
+  const r = await page.evaluate(() => {
+    const L = window.lifeos;
+    const vandaag = new Date().toISOString().slice(0, 10);
+    // 14 dagen lineair stijgend: 70.0 → 71.3 (0.1/dag = 0.7 kg/week)
+    for (let i = 13; i >= 0; i--) {
+      L.store.nutrition.weight.push({ date: L.addDays(vandaag, -i), kg: 70 + (13 - i) * 0.1 });
+    }
+    return { trend: L.trendGewicht(), perWeek: L.trendPerWeek() };
+  });
+  // gemiddelde van de laatste 7 (70.7..71.3) = 71.0
+  expect(r.trend).toBeCloseTo(71.0, 1);
+  expect(r.perWeek).toBeCloseTo(0.7, 1);
+});
+
+test('eigen recept toevoegen en verwijderen met undo', async ({ page }) => {
+  await page.goto(APP);
+  await page.evaluate(() => window.showTab('eten'));
+  await page.click('#tab-eten summary:has-text("Eigen recept")');
+  await page.fill('#er-naam', 'Proteïne-pannenkoeken');
+  await page.fill('#er-kcal', '400');
+  await page.fill('#er-eiwit', '35');
+  await page.fill('#er-ingr', '100 g havermout\n2 eieren\n100 g kwark');
+  await page.fill('#er-stappen', 'Blenden\nBakken');
+  await page.click('#tab-eten button:has-text("+ recept opslaan")');
+  await expect(page.locator('#tab-eten')).toContainText('Proteïne-pannenkoeken');
+  await page.reload();
+  await page.evaluate(() => window.showTab('eten'));
+  await expect(page.locator('#tab-eten')).toContainText('Proteïne-pannenkoeken'); // persistent
 });
 
 test('screenshots: iPhone 390×844 en desktop 1280×800', async ({ browser }) => {
