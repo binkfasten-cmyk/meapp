@@ -54,23 +54,67 @@ test('training toevoegen telt mee voor de week', async ({ page }) => {
   expect(wk).toContain('1');
 });
 
-test('portie +1 en portie gegeten (met lastEaten + maaltijdlog)', async ({ page }) => {
+test('kookronde: compleet gerecht plannen, koken, portie gegeten + maaltijdlog', async ({ page }) => {
   await page.goto(APP);
-  await page.evaluate(() => { window.showTab('eten'); etenView = 'vriezer'; renderEten(); });
-  const eerste = page.locator('#tab-eten .card').nth(1).locator('.rij').first();
-  await eerste.locator('button[aria-label="portie erbij"]').click();
-  await expect(page.locator('#tab-eten .card').nth(1).locator('.rij').first().locator('.porties-groot')).toHaveText('1');
-  await page.locator('#tab-eten .card').nth(1).locator('.rij').first().locator('button[title="portie gegeten"]').click();
-  await expect(page.locator('#tab-eten .card').nth(1).locator('.rij').first().locator('.porties-groot')).toHaveText('0');
+  await page.evaluate(() => { window.showTab('eten'); etenView = 'ronde'; renderEten(); });
+  // compleet gerecht kiezen
+  await page.click('#tab-eten button:has-text("+ compleet gerecht")');
+  await page.locator('dialog#modal .rij:has-text("Chili con carne") button:has-text("kies")').click();
+  await expect(page.locator('#tab-eten')).toContainText('1/4 gerechten');
+  // boodschappenlijst is gegenereerd uit de klassieker-ingrediënten
+  const bood = await page.evaluate(() => window.lifeos.store.grocery.lists.plan.map((x) => x.item));
+  expect(bood).toContain('500 g rundergehakt');
+  expect(bood).toContain('1 blik kidneybonen');
+  // draaiboek is gegenereerd met echte stappen
+  const db = await page.evaluate(() => window.lifeos.store.freezer.draaiboek.map((x) => x.txt));
+  expect(db.some((t) => t.includes('Mise en place'))).toBe(true);
+  expect(db.some((t) => t.includes('Chili con carne'))).toBe(true);
+  expect(db.some((t) => t.includes('kidneybonen'))).toBe(true);
+  // ronde gekookt -> voorraad met 4 porties
+  await page.click('#tab-eten button:has-text("Ronde gekookt ✓")');
+  await expect(page.locator('#tab-eten')).toContainText('Voorraad');
+  const rij = page.locator('#tab-eten .rij:has-text("Chili con carne")').last();
+  await expect(rij.locator('.porties-groot')).toHaveText('4');
+  // portie gegeten -> voorraad -1 en maaltijd gelogd
+  await rij.locator('button[title="portie gegeten"]').click();
   const st = await page.evaluate(() => ({
-    lastEaten: window.lifeos.store.freezer.dishes[0].lastEaten,
+    voorraad: window.lifeos.store.freezer.voorraad[0],
     meals: window.lifeos.store.nutrition.meals,
   }));
-  expect(st.lastEaten).toBeTruthy();
-  // vriezerportie is automatisch als maaltijd gelogd, met eiwit uit de macrotabel
+  expect(st.voorraad.porties).toBe(3);
+  expect(st.voorraad.lastEaten).toBeTruthy();
   expect(st.meals.length).toBe(1);
   expect(st.meals[0].naam).toBe('Chili con carne');
   expect(st.meals[0].eiwit).toBeGreaterThan(20);
+});
+
+test('kookronde: zelf mixen — componenten worden één gerecht met opgetelde macro’s', async ({ page }) => {
+  await page.goto(APP);
+  await page.evaluate(() => { window.showTab('eten'); etenView = 'ronde'; renderEten(); });
+  await page.click('#tab-eten button:has-text("+ mix zelf")');
+  await page.locator('dialog#modal input.mix-check[value="kip-grill"]').check();
+  await page.locator('dialog#modal input.mix-check[value="saus-roomtomaat"]').check();
+  await page.locator('dialog#modal input.mix-check[value="kool-rijst"]').check();
+  // live preview telt op: 320 + 170 + 270 kcal
+  await expect(page.locator('#mix-preview')).toContainText('760 kcal');
+  await page.fill('#mix-naam', 'Romige kip met rijst');
+  await page.click('dialog#modal button:has-text("+ toevoegen aan ronde")');
+  await expect(page.locator('#tab-eten')).toContainText('Romige kip met rijst');
+  // boodschappen bevatten ingrediënten van álle componenten
+  const bood = await page.evaluate(() => window.lifeos.store.grocery.lists.plan.map((x) => x.item));
+  expect(bood).toContain('500 g kipfilet');
+  expect(bood.some((x) => x.includes('kookroom'))).toBe(true);
+  expect(bood.some((x) => x.includes('rijst'))).toBe(true);
+  // draaiboek: rijst wordt uitgesteld naar de eetdag
+  const db = await page.evaluate(() => window.lifeos.store.freezer.draaiboek.map((x) => x.txt));
+  expect(db.some((t) => t.includes('vers bereiden op de eetdag'))).toBe(true);
+  // koken en eten: één tik logt het als één gerecht met som-macro's
+  await page.click('#tab-eten button:has-text("Ronde gekookt ✓")');
+  await page.locator('#tab-eten .rij:has-text("Romige kip met rijst") button[title="portie gegeten"]').click();
+  const meal = await page.evaluate(() => window.lifeos.store.nutrition.meals[0]);
+  expect(meal.naam).toBe('Romige kip met rijst');
+  expect(meal.kcal).toBe(760);
+  expect(meal.eiwit).toBe(66); // 58 + 3 + 5
 });
 
 test('overhoormodus: één ronde vraag → antwoord → goed', async ({ page }) => {
@@ -104,14 +148,16 @@ test('persistentie: data blijft na herladen', async ({ page }) => {
   await page.evaluate(() => window.showTab('taken'));
   await page.fill('#taak-titel', 'Blijf-ik-staan-taak');
   await page.click('#tab-taken button:has-text("+ taak")');
-  await page.evaluate(() => { window.showTab('eten'); etenView = 'vriezer'; renderEten(); });
-  await page.locator('#tab-eten .card').nth(1).locator('.rij').first()
-    .locator('button[aria-label="portie erbij"]').click();
+  await page.evaluate(() => {
+    planVoegToe(['vz-dal'], 'Rode linzen-dal');
+    rondeGekookt();
+  });
   await page.reload();
   await page.evaluate(() => window.showTab('taken'));
   await expect(page.locator('#tab-taken')).toContainText('Blijf-ik-staan-taak');
-  const porties = await page.evaluate(() => window.lifeos.store.freezer.dishes[0].porties);
-  expect(porties).toBe(1);
+  const voorraad = await page.evaluate(() => window.lifeos.store.freezer.voorraad[0]);
+  expect(voorraad.naam).toBe('Rode linzen-dal');
+  expect(voorraad.porties).toBe(4);
 });
 
 test('file://-smoketest: agenda toont fallback i.p.v. iframe', async ({ page }) => {
@@ -149,22 +195,30 @@ test('datumlogica: spacing-gap, kookronde, achterstallig', async ({ page }) => {
   expect(r.overdueKlaar).toBe(false);
 });
 
-test('kookronde gekookt: 4 porties, datum vandaag, ronde schuift door', async ({ page }) => {
+test('migratie: oude vaste-gerechten-data wordt voorraad (schema v3 → v4)', async ({ page }) => {
   await page.goto(APP);
-  await page.evaluate(() => { window.showTab('eten'); etenView = 'vriezer'; renderEten(); });
-  await page.click('#tab-eten button:has-text("gekookt ✓")');
-  const st = await page.evaluate(() => ({
-    r1: window.lifeos.store.freezer.dishes.filter((d) => d.ronde === 1).map((d) => d.porties),
-    lastCook: window.lifeos.store.freezer.lastCookDate,
-    next: window.lifeos.store.freezer.nextRound,
-  }));
-  expect(st.r1).toEqual([4, 4, 4, 4]);
-  expect(st.lastCook).toBe(new Date().toISOString().slice(0, 10));
-  expect(st.next).toBe(2);
-  // avondeten-suggestie komt nu uit ronde 1
-  const sug = await page.evaluate(() => window.lifeos.avondetenSuggestie());
-  expect(sug).not.toBeNull();
-  expect(sug.ronde).toBe(1);
+  await page.evaluate(() => {
+    localStorage.setItem('lifeos_v1', JSON.stringify({
+      settings: { name: '', weekGoal: 3, cycleDays: 16, updated_at: '2026-01-01T00:00:00Z' },
+      freezer: {
+        dishes: [
+          { id: 'chili', naam: 'Chili con carne', ronde: 1, veg: false, serveerMet: 'rijst', porties: 3, lastEaten: '2026-08-01' },
+          { id: 'tikka', naam: 'Kip tikka masala', ronde: 1, veg: false, serveerMet: 'rijst', porties: 0, lastEaten: null },
+        ],
+        lastCookDate: '2026-07-20', nextRound: 2, updated_at: '2026-01-01T00:00:00Z',
+      },
+    }));
+  });
+  await page.reload();
+  const st = await page.evaluate(() => window.lifeos.store.freezer);
+  // porties > 0 worden voorraad-items met macro's; lege gerechten niet
+  expect(st.voorraad.length).toBe(1);
+  expect(st.voorraad[0].naam).toBe('Chili con carne');
+  expect(st.voorraad[0].porties).toBe(3);
+  expect(st.voorraad[0].macros.eiwit).toBeGreaterThan(20);
+  expect(st.lastCookDate).toBe('2026-07-20');
+  expect(st.dishes).toBeUndefined();
+  expect(st.nextRound).toBeUndefined();
 });
 
 test('quick-add via native dialog: taak vanaf Vandaag', async ({ page }) => {
@@ -214,12 +268,13 @@ test('avondeten-suggestie: nooit het gerecht van gisteren', async ({ page }) => 
     const gisteren = new Date(vandaag); gisteren.setDate(gisteren.getDate() - 1);
     const langGeleden = new Date(vandaag); langGeleden.setDate(langGeleden.getDate() - 10);
     // alleen 2 gerechten op voorraad: gisteren gegeten vs. 10 dagen geleden
-    L.store.freezer.dishes.forEach((d) => { d.porties = 0; });
-    L.store.freezer.dishes[0].porties = 3; L.store.freezer.dishes[0].lastEaten = iso(gisteren);
-    L.store.freezer.dishes[1].porties = 1; L.store.freezer.dishes[1].lastEaten = iso(langGeleden);
+    L.store.freezer.voorraad = [
+      { id: 'a', naam: 'Gisteren-gerecht', recepten: [], porties: 3, lastEaten: iso(gisteren), macros: null },
+      { id: 'b', naam: 'Oud-gerecht', recepten: [], porties: 1, lastEaten: iso(langGeleden), macros: null },
+    ];
     return L.avondetenSuggestie();
   });
-  expect(sug.id).not.toBe('chili'); // dish[0] = gisteren gegeten → uitgesloten
+  expect(sug.id).toBe('b'); // gisteren gegeten → uitgesloten, langst-geleden wint
 });
 
 test('fout antwoord = korte tussenpoos (morgen), goed = vak-tussenpoos', async ({ page }) => {

@@ -252,7 +252,6 @@ function gcalLink(titel, datumISO, van, tot, details){
     + '&details=' + encodeURIComponent(details || '');
 }
 /* ================= seed-data ================= */
-const RONDE_NAMEN = {1:'The Basics', 2:'Comfort', 3:'World Kitchen', 4:'Fast & Fresh'};
 function seedDishes(){
   const mk = (id, naam, ronde, veg, serveerMet) => ({id, naam, ronde, veg, serveerMet, porties:0, lastEaten:null});
   return [
@@ -276,6 +275,7 @@ function seedDishes(){
 }
 function seedLijst(items){ return items.map(item => ({item, checked:false})); }
 function seedGrocery(){
+  /* r1-r4 vervallen: de rondelijst wordt nu gegenereerd uit het geplande menu */
   return {
     staples: seedLijst(['Tomatenblokjes (6+ blikken)','Passata','Tomatenpuree','Kidneybonen','Zwarte bonen','Kikkererwten (blik)','Linzen (blik)','Maïs','Kokosmelk (3+)','Rijst','Pasta','Rode linzen (droog)','Bloem','Maizena','Paneermeel','Noedels','Sojasaus','Ketjap manis','Sambal','Rode currypasta','Pindakaas','Ketchup','Honing','Azijn','Olie','Bouillonblokjes (3 soorten)','Paprikapoeder (gewoon + gerookt)','Komijn','Kerriepoeder','Garam masala','Kurkuma','Oregano','Italiaanse kruiden','Chilipoeder','Laurier','Kruidnagel','Diepvries spinazie','Diepvries sperziebonen','Diepvries broccoliroosjes']),
     r1: seedLijst(['3 uien','1 bol knoflook','2 rode paprika’s','1 winterpeen','Bleekselderij (optioneel)','Gember','1 limoen','500 g rundergehakt','500 g half-om-half gehakt','1,1 kg kippendij','200 ml kookroom']),
@@ -284,16 +284,6 @@ function seedGrocery(){
     r4: seedLijst(['4 uien','Knoflook','2 rode paprika’s','250 g champignons','600 g zoete aardappel','Gember','1,2 kg kippendij']),
   };
 }
-const KOOKDAG_STAPPEN = [
-  ['0:00','Sudderaar eerst: stoofvlees aanbraden, uien erbij, opzetten op laagste vuur'],
-  ['0:25','Al het snijwerk voor de andere 3 gerechten — per gerecht in bakjes'],
-  ['0:45','Gerecht 2 (langste pruttelaar) op het vuur'],
-  ['1:10','Gerecht 3 op; tussendoor roeren en alvast afwassen'],
-  ['1:45','Gerecht 4 (snelste) in de vrijgekomen pan'],
-  ['2:15','Alles afmaken en proeven'],
-  ['2:15–2:45','Portioneren in platte zakken, labelen (gerecht + datum), plat invriezen op een bakplaat'],
-  ['Volgende dag','Tegels rechtop zetten en voorraad in de app bijwerken'],
-];
 const TECHNIEKEN = ['Retrieval','Spaced review','Interleaved oefenen','Self-explanation','Dual coding','Herlezen (betrapt)'];
 const DOMEINEN = ['School','Werk','Business','Thuis'];
 /* ================= kookboek-seed =================
@@ -301,7 +291,7 @@ const DOMEINEN = ['School','Werk','Business','Thuis'];
    kruidenmixen — vrij te combineren. Macro's per portie, gebaseerd op
    USDA/NEVO-waarden voor de bereide toestand. Mixen hebben geen macro's
    (verwaarloosbaar) maar wel batch-, houdbaarheids- en doseerinfo. */
-const CAT_NAMEN = {kip:'Kip', rund:'Rund & gehakt', vis:'Vis', ei:'Eieren', vega:'Vega-eiwit', saus:'Sauzen', kool:'Koolhydraten', groente:'Groenten', mix:'Kruidenmixen', vriezer:'Vriezergerechten'};
+const CAT_NAMEN = {kip:'Kip', rund:'Rund & gehakt', vis:'Vis', ei:'Eieren', vega:'Vega-eiwit', saus:'Sauzen', kool:'Koolhydraten', groente:'Groenten', mix:'Kruidenmixen', vriezer:'Complete gerechten'};
 const RECEPTEN = [
   /* ---- kip: zes basisbereidingen ---- */
   {id:'kip-grill', naam:'Gegrilde kipfilet', cat:'kip', tijd:15, porties:2,
@@ -539,23 +529,62 @@ const VRIEZER_MACROS = {
   teriyaki:{kcal:320, eiwit:34, khd:20, vet:9}, sincarne:{kcal:300, eiwit:15, khd:40, vet:8},
   cacciatore:{kcal:330, eiwit:34, khd:10, vet:15}, pinda:{kcal:420, eiwit:25, khd:28, vet:23},
 };
+/* De 16 klassiekers uit het 16-dagen-systeem, nu als volwaardige recepten
+   (4 porties per pan) — zodat de boodschappen-generator hun ingrediënten kent. */
+const KLASSIEKERS = {
+  chili:{tijd:40, ingr:['500 g rundergehakt','1 ui','2 tenen knoflook','1 rode paprika','1 blik tomatenblokjes','1 el tomatenpuree','1 blik kidneybonen','1 blik maïs','1 el taco-/Mexicaanse mix'],
+    stappen:['Ui, knoflook en paprika fruiten.','Gehakt rul bakken; tacomix en puree 1 min mee.','Tomatenblokjes, kidneybonen en maïs erbij; 20 min zachtjes pruttelen.']},
+  tikka:{tijd:45, ingr:['550 g kippendijfilet','1 ui','2 tenen knoflook','stukje gember','1 blik tomatenblokjes','1 el tomatenpuree','100 ml kookroom','1 el kerriemix + garam masala'],
+    stappen:['Ui, knoflook en gember fruiten; kruiden 1 min mee.','Kip aanbakken; tomatenblokjes en puree erbij, 25 min zachtjes sudderen.','Room erdoor en niet meer laten koken.']},
+  bolognese:{tijd:75, ingr:['500 g half-om-half gehakt','1 ui','2 tenen knoflook','1 winterpeen','1 stengel bleekselderij','1 blik tomatenblokjes','250 ml passata','1 el Italiaanse mix'],
+    stappen:['Ui, knoflook, fijngesneden peen en selderij zacht fruiten (soffritto).','Gehakt rul bakken; tomatenblokjes, passata en kruiden erbij.','Minstens 45 min zachtjes laten pruttelen.']},
+  thaicurry:{tijd:30, ingr:['550 g kippendijfilet','2 el rode currypasta','1 blik kokosmelk','1 rode paprika','200 g diepvries sperziebonen','1 limoen'],
+    stappen:['Currypasta 2 min bakken tot hij geurt.','Kip aanbakken; kokosmelk erbij, 15 min zachtjes koken.','Paprika en sperziebonen laatste 8 min mee; afmaken met limoen.']},
+  gehaktbal:{tijd:45, ingr:['500 g half-om-half gehakt','1 ei','3 el paneermeel','1 ui','2 tenen knoflook','250 ml passata','1 blik tomatenblokjes','1 el Italiaanse mix'],
+    stappen:['Balletjes draaien van gehakt, ei en paneermeel; rondom bruin bakken.','Ui en knoflook fruiten; passata, tomatenblokjes en kruiden erbij.','Balletjes 20 min in de saus laten sudderen.']},
+  pulled:{tijd:60, ingr:['600 g kippendijfilet','2 uien','2 tenen knoflook','1½ el BBQ-rub','3 el ketchup','1 el honing','scheut azijn'],
+    stappen:['Uien fruiten; kip en BBQ-rub erbij.','Scheut water, deksel erop, 45 min zachtjes stoven.','Uit elkaar trekken; ketchup, honing en azijn erdoor roeren.']},
+  dal:{tijd:35, ingr:['300 g rode linzen','2 uien','2 tenen knoflook','stukje gember','1 el kerriemix','1 tl kurkuma','1 blik tomatenblokjes','1 blik kokosmelk','1 citroen'],
+    stappen:['Ui, knoflook en gember fruiten; kruiden 1 min mee.','Linzen, tomatenblokjes en kokosmelk erbij; 25 min zachtjes koken, af en toe roeren.','Afmaken met citroensap en zout.']},
+  goulash:{tijd:180, ingr:['600 g riblappen','2 uien','2 tenen knoflook','2 paprika’s','1 el paprikapoeder + 1 tl gerookt','1 el tomatenpuree','400 ml bouillon','laurierblaadje'],
+    stappen:['Vlees in blokjes zouten en hard aanbraden.','Uien en paprika meebakken; paprikapoeder en puree kort mee.','Bouillon en laurier erbij; 2,5–3 uur op het laagste vuur.']},
+  sate:{tijd:50, ingr:['600 g kippendijfilet','1 ui','2 tenen knoflook','stukje gember','4 el pindakaas','2 el ketjap manis','200 ml kokosmelk','1 tl sambal','1 limoen'],
+    stappen:['Ui, knoflook en gember fruiten; kip aanbakken.','Pindakaas, ketjap, kokosmelk en sambal erbij; 30 min zachtjes stoven.','Afmaken met limoensap.']},
+  fajita:{tijd:25, ingr:['600 g kipfilet of -dij','2 paprika’s','2 uien','2 tenen knoflook','1 el taco-/Mexicaanse mix','1 blik maïs','1 limoen'],
+    stappen:['Kip in reepjes met de tacomix bakken.','Ui en paprika in reepjes op hoog vuur meebakken.','Maïs erbij; afmaken met limoen.']},
+  kikker:{tijd:30, ingr:['2 blikken kikkererwten','300 g diepvries spinazie','1 ui','2 tenen knoflook','stukje gember','1 el kerriemix','1 blik tomatenblokjes','200 ml kokosmelk'],
+    stappen:['Ui, knoflook en gember fruiten; kerriemix 1 min mee.','Kikkererwten, tomatenblokjes en kokosmelk erbij; 15 min pruttelen.','Spinazie erdoor tot geslonken.']},
+  hachee:{tijd:190, ingr:['600 g hacheevlees/riblappen','3 uien','1 el bloem','scheut azijn','400 ml bouillon','2 laurierblaadjes','3 kruidnagels','1 plak ontbijtkoek'],
+    stappen:['Vlees zouten, door de bloem en hard aanbraden; uien meebakken.','Bouillon, azijn, laurier en kruidnagel erbij.','3 uur zachtjes stoven; laatste half uur de ontbijtkoek erdoor.']},
+  teriyaki:{tijd:25, ingr:['600 g kippendijfilet','5 el sojasaus','2 el honing','2 tenen knoflook','stukje gember','1 tl maizena','300 g diepvries broccoliroosjes'],
+    stappen:['Kip in blokjes aanbakken.','Teriyakisaus (soja, honing, knoflook, gember, maizenapapje) erbij en laten binden.','Broccoli 5 min meestomen.']},
+  sincarne:{tijd:30, ingr:['1 blik kidneybonen','1 blik zwarte bonen','1 blik maïs','2 uien','2 tenen knoflook','1 rode paprika','1 blik tomatenblokjes','1 el taco-/Mexicaanse mix'],
+    stappen:['Ui, knoflook en paprika fruiten; tacomix 1 min mee.','Bonen, maïs en tomatenblokjes erbij; 20 min zachtjes pruttelen.']},
+  cacciatore:{tijd:50, ingr:['600 g kippendijfilet','1 ui','2 tenen knoflook','1 paprika','250 g champignons','1 blik tomatenblokjes','1 el Italiaanse mix'],
+    stappen:['Kip aanbraden en even uitnemen.','Ui, knoflook, paprika en champignons bakken.','Tomatenblokjes en kruiden erbij; kip terug, 30 min sudderen.']},
+  pinda:{tijd:35, ingr:['600 g zoete aardappel','1 ui','2 tenen knoflook','stukje gember','4 el pindakaas','1 blik tomatenblokjes','200 ml kokosmelk','200 g diepvries spinazie','1 limoen'],
+    stappen:['Ui, knoflook en gember fruiten.','Zoete aardappel in blokjes, tomatenblokjes, pindakaas en kokosmelk erbij; 20 min zachtjes koken.','Spinazie erdoor; afmaken met limoen.']},
+};
 function alleRecepten(){
-  const vriezer = seedDishes().map(d => ({
-    id:'vz-'+d.id, naam:d.naam, cat:'vriezer', tijd:null, porties:1,
-    ingr:['Uit de vriezer — gekookt tijdens ronde '+d.ronde+' ('+RONDE_NAMEN[d.ronde]+')'],
-    stappen:['Ontdooien in koelkast of magnetron.','Door-en-door heet opwarmen (stomend, ≥75°C).','Serveren met vers gekookte '+d.serveerMet+'.'],
-    tip:null, combi:'Vers koolhydraat: '+d.serveerMet, macros:VRIEZER_MACROS[d.id] || null, veg:d.veg,
-  }));
-  return RECEPTEN.concat(vriezer, S.cookbook.custom);
+  const klassiek = seedDishes().map(d => {
+    const k = KLASSIEKERS[d.id] || {tijd:45, ingr:[], stappen:[]};
+    return {
+      id:'vz-'+d.id, naam:d.naam, cat:'vriezer', tijd:k.tijd, porties:4,
+      ingr:k.ingr,
+      stappen:k.stappen.concat(['Invriezen? Portioneren in platte zakken, labelen met naam + datum. Serveren met vers gekookte '+d.serveerMet+'.']),
+      tip:null, combi:'Vers koolhydraat erbij: '+d.serveerMet, macros:VRIEZER_MACROS[d.id] || null, veg:d.veg,
+    };
+  });
+  return RECEPTEN.concat(klassiek, S.cookbook.custom);
 }
 /* ================= store ================= */
 const KEY = 'lifeos_v1';
-const SCHEMA_VERSION = 3;
+const SCHEMA_VERSION = 4;
 const COLLECTIONS = ['settings','freezer','grocery','training','study','tasks','money','cookbook','nutrition'];
 function defaults(){
   return {
     settings: {name:'', weekGoal:3, cycleDays:16, supabaseUrl:'', supabaseKey:'', gcalEmbedSrc:'', updated_at:''},
-    freezer: {dishes: seedDishes(), lastCookDate:null, nextRound:1, cookdayChecked:[false,false,false,false,false,false,false,false], updated_at:''},
+    freezer: {plan: [], voorraad: [], draaiboek: [], lastCookDate:null, updated_at:''},
     grocery: {lists: seedGrocery(), updated_at:''},
     training: {log: [], updated_at:''},
     study: {vakken: [], items: [], sessions: [], updated_at:''},
@@ -575,17 +604,24 @@ function migrate(st){
   for(const k of COLLECTIONS){
     if(!st[k] || typeof st[k] !== 'object') st[k] = def[k];
   }
-  const perId = new Map((st.freezer.dishes || []).map(d => [d.id, d]));
-  st.freezer.dishes = seedDishes().map(seed => {
-    const eigen = perId.get(seed.id);
-    return eigen ? Object.assign({}, seed, {porties:Math.max(0, Number(eigen.porties)||0), lastEaten:eigen.lastEaten||null}) : seed;
-  });
-  if(!Array.isArray(st.freezer.cookdayChecked) || st.freezer.cookdayChecked.length !== 8)
-    st.freezer.cookdayChecked = def.freezer.cookdayChecked;
-  if(![1,2,3,4].includes(st.freezer.nextRound)) st.freezer.nextRound = 1;
-  if(!st.grocery.lists) st.grocery.lists = seedGrocery();
-  for(const l of ['staples','r1','r2','r3','r4'])
-    if(!Array.isArray(st.grocery.lists[l]) || !st.grocery.lists[l].length) st.grocery.lists[l] = seedGrocery()[l];
+  if(!Array.isArray(st.freezer.plan)) st.freezer.plan = [];
+  if(!Array.isArray(st.freezer.draaiboek)) st.freezer.draaiboek = [];
+  if(!Array.isArray(st.freezer.voorraad)){
+    st.freezer.voorraad = [];
+    /* legacy (schema ≤3): vaste 16 gerechten met porties > 0 worden voorraad-items */
+    if(Array.isArray(st.freezer.dishes)){
+      for(const d of st.freezer.dishes){
+        if(d.porties > 0) st.freezer.voorraad.push({id:'vz-'+d.id, naam:d.naam, recepten:['vz-'+d.id], porties:d.porties, lastEaten:d.lastEaten||null, macros:VRIEZER_MACROS[d.id]||null, versErbij:'verse '+(d.serveerMet||'rijst')});
+      }
+    }
+  }
+  for(const v of st.freezer.voorraad){ if(!Array.isArray(v.recepten)) v.recepten = []; v.porties = Math.max(0, Number(v.porties)||0); }
+  for(const pl of st.freezer.plan){ if(!Array.isArray(pl.recepten)) pl.recepten = []; if(!pl.porties) pl.porties = 4; }
+  delete st.freezer.dishes; delete st.freezer.nextRound; delete st.freezer.cookdayChecked;
+  if(!st.grocery.lists) st.grocery.lists = {};
+  if(!Array.isArray(st.grocery.lists.staples) || !st.grocery.lists.staples.length) st.grocery.lists.staples = seedGrocery().staples;
+  if(!Array.isArray(st.grocery.lists.plan)) st.grocery.lists.plan = [];
+  delete st.grocery.lists.r1; delete st.grocery.lists.r2; delete st.grocery.lists.r3; delete st.grocery.lists.r4;
   if(!Array.isArray(st.training.log)) st.training.log = [];
   for(const k of ['vakken','items','sessions']) if(!Array.isArray(st.study[k])) st.study[k] = [];
   if(!Array.isArray(st.tasks.list)) st.tasks.list = [];
@@ -824,7 +860,7 @@ function trainingenDezeWeek(){
 }
 function avondetenSuggestie(){
   const gisteren = addDays(todayISO(), -1);
-  const kandidaten = S.freezer.dishes.filter(d => d.porties > 0 && d.lastEaten !== gisteren && d.lastEaten !== todayISO());
+  const kandidaten = S.freezer.voorraad.filter(d => d.porties > 0 && d.lastEaten !== gisteren && d.lastEaten !== todayISO());
   if(!kandidaten.length) return null;
   kandidaten.sort((a,b) => (a.lastEaten||'0000') < (b.lastEaten||'0000') ? -1 : 1);
   return kandidaten[0];
@@ -834,7 +870,7 @@ function volgendeKookdatum(){
   return addDays(S.freezer.lastCookDate, Number(S.settings.cycleDays) || 16);
 }
 function renderVandaag(){
-  const totPorties = S.freezer.dishes.reduce((s,d) => s + d.porties, 0);
+  const totPorties = S.freezer.voorraad.reduce((s,d) => s + d.porties, 0);
   const kook = volgendeKookdatum();
   const kookDagen = kook ? daysUntil(kook) : null;
   const wk = trainingenDezeWeek();
@@ -865,8 +901,8 @@ function renderVandaag(){
     lijst += `<div class="rij">
       <span style="font-size:1.3rem">🍲</span>
       <div class="groei"><div class="titel">Avondeten: ${esc(sug.naam)}</div>
-      <div class="sub">langst niet gegeten · serveer met vers gekookte ${esc(sug.serveerMet)} · ${sug.porties} porties in de vriezer</div></div>
-      <button class="knop klein terra" onclick="portieGegeten('${sug.id}')">gegeten ✓</button>
+      <div class="sub">langst niet gegeten${sug.versErbij ? ' · ' + esc(sug.versErbij) + ' erbij' : ''} · ${sug.porties} porties in de vriezer</div></div>
+      <button class="knop klein terra" onclick="voorraadGegeten('${sug.id}')">gegeten ✓</button>
     </div>`;
   } else {
     lijst += `<div class="leeg">Geen vriezermaaltijd beschikbaar — tijd voor een kookronde 🍳</div>`;
@@ -923,10 +959,10 @@ function quickTraining(){
   closeModal(); save('training');
 }
 function modalPortie(){
-  const met = S.freezer.dishes.filter(d => d.porties > 0);
+  const met = S.freezer.voorraad.filter(d => d.porties > 0);
   const rows = met.length ? met.map(d => `<div class="rij">
       <div class="groei"><div class="titel">${esc(d.naam)}</div><div class="sub">${d.porties} porties</div></div>
-      <button class="knop klein terra" onclick="portieGegeten('${d.id}');closeModal()">gegeten ✓</button>
+      <button class="knop klein terra" onclick="voorraadGegeten('${d.id}');closeModal()">gegeten ✓</button>
     </div>`).join('') : '<div class="leeg">De vriezer is leeg.</div>';
   openModal(`<h3 id="modal-titel">Welke portie heb je gegeten?</h3>${rows}
     <div class="formrij"><button class="knop licht" style="flex:1" onclick="closeModal()">Sluiten</button></div>`);
@@ -998,14 +1034,14 @@ function dishStatus(d){
   return ['b-groen','op voorraad'];
 }
 function renderEten(){
-  const subs = [['kookboek','📖 Kookboek'],['gegeten','🍽 Gegeten'],['vriezer','🧊 Vriezer'],['bood','🛒 Boodschappen']];
+  const subs = [['kookboek','📖 Kookboek'],['gegeten','🍽 Gegeten'],['ronde','🍳 Kookronde'],['bood','🛒 Boodschappen']];
   const sub = '<div class="filterrij">' + subs.map(([k, n]) =>
     `<button class="${etenView === k ? 'active':''}" onclick="etenView='${k}';renderEten()">${n}</button>`).join('') + '</div>';
   let body;
   if(etenView === 'kookboek') body = bouwKookboek();
   else if(etenView === 'gegeten') body = bouwGegeten();
   else if(etenView === 'bood') body = bouwBoodschappen();
-  else body = bouwVriezer();
+  else body = bouwKookronde();
   $('#tab-eten').innerHTML = `<div class="datekop"><h1>Eten</h1><div class="sub">Kookboek · maaltijdlog · 16-dagen vriezersysteem</div></div>` + sub + body;
 }
 /* ---- kookboek ---- */
@@ -1149,7 +1185,7 @@ function logHandmatig(){
 function lijstDetails(key, naam){
   const l = S.grocery.lists[key];
   const done = l.filter(x => x.checked).length;
-  return `<details class="card" data-key="lijst-${key}" ${key === 'r' + S.freezer.nextRound ? 'open':''}><summary>${naam} <span class="badge b-grijs">${done}/${l.length}</span></summary>
+  return `<details class="card" data-key="lijst-${key}"><summary>${naam} <span class="badge b-grijs">${done}/${l.length}</span></summary>
     ${l.map((x, i) => `<div class="rij ${x.checked ? 'klaar':''}">
       <input type="checkbox" class="chk" ${x.checked ? 'checked':''} onchange="toggleGrocery('${key}',${i})">
       <div class="groei titel">${esc(x.item)}</div></div>`).join('')}
@@ -1157,33 +1193,228 @@ function lijstDetails(key, naam){
   </details>`;
 }
 function bouwBoodschappen(){
-  return lijstDetails('staples', 'Basisvoorraad')
-    + lijstDetails('r1', 'Ronde 1 vers — The Basics')
-    + lijstDetails('r2', 'Ronde 2 vers — Comfort')
-    + lijstDetails('r3', 'Ronde 3 vers — World Kitchen')
-    + lijstDetails('r4', 'Ronde 4 vers — Fast & Fresh');
+  const plan = S.grocery.lists.plan || [];
+  const done = plan.filter(x => x.checked).length;
+  const planKaart = S.freezer.plan.length
+    ? `<div class="card"><h2>Voor jouw kookronde <span class="badge b-grijs">${done}/${plan.length}</span></h2>
+        <div class="hint" style="margin-bottom:.4rem">Automatisch samengesteld uit de ${S.freezer.plan.length} geplande gerechten. Verandert mee met je plan.</div>
+        ${plan.map((x, i) => `<div class="rij ${x.checked ? 'klaar':''}">
+          <input type="checkbox" class="chk" ${x.checked ? 'checked':''} onchange="toggleGrocery('plan',${i})">
+          <div class="groei titel">${esc(x.item)}</div></div>`).join('') || '<div class="leeg">Nog geen ingrediënten.</div>'}
+        <div class="formrij"><button class="knop klein licht" onclick="resetGrocery('plan')">Lijst resetten</button></div>
+      </div>`
+    : `<div class="card"><h2>Voor jouw kookronde</h2><div class="leeg">Plan eerst gerechten bij 🍳 Kookronde — de boodschappenlijst wordt dan automatisch samengesteld.</div></div>`;
+  return planKaart + lijstDetails('staples', 'Basisvoorraad (aanvullen wanneer op)');
 }
-/* ---- vriezer (16-dagen-systeem) ---- */
-function bouwVriezer(){
-  const kook = volgendeKookdatum();
-  let inv = '';
-  for(const r of [1,2,3,4]){
-    inv += `<h3 style="margin-top:.9rem">Ronde ${r} — ${RONDE_NAMEN[r]}${S.freezer.nextRound === r ? ' <span class="badge b-terra">aan de beurt</span>':''}</h3>`;
-    for(const d of S.freezer.dishes.filter(x => x.ronde === r)){
-      const [cls, txt] = dishStatus(d);
-      inv += `<div class="rij">
-        <div class="groei">
-          <div class="titel">${esc(d.naam)} ${d.veg ? '<span class="veg-tag">VEG</span>':''}</div>
-          <div class="sub"><span class="badge ${cls}">${txt}</span> · met verse ${esc(d.serveerMet)}${d.lastEaten ? ' · laatst gegeten '+fmtDate(d.lastEaten):''}</div>
-        </div>
-        <button class="iconbtn mini" onclick="portiesPlus('${d.id}',-1)" aria-label="portie eraf">−</button>
-        <span class="porties-groot">${d.porties}</span>
-        <button class="iconbtn mini" onclick="portiesPlus('${d.id}',1)" aria-label="portie erbij">+</button>
-        <button class="knop klein licht" onclick="portieGegeten('${d.id}')" title="portie gegeten">🍽</button>
-      </div>`;
+/* ---- kookronde: plannen, genereren, koken, voorraad ---- */
+function planKookTijd(p, rs){
+  return Math.max(0, ...p.recepten.map(id => {
+    const r = rs.find(x => x.id === id);
+    return (r && r.cat !== 'kool' && r.cat !== 'mix') ? (r.tijd || 0) : 0;
+  }));
+}
+function planMacros(p){
+  const rs = alleRecepten();
+  return p.recepten.reduce((t, rid) => {
+    const r = rs.find(x => x.id === rid);
+    const m = r && r.macros;
+    return m ? {kcal:t.kcal + m.kcal, eiwit:t.eiwit + m.eiwit, khd:t.khd + m.khd, vet:t.vet + m.vet} : t;
+  }, {kcal:0, eiwit:0, khd:0, vet:0});
+}
+function planVersErbij(p){
+  const rs = alleRecepten();
+  const vers = [];
+  for(const rid of p.recepten){
+    const r = rs.find(x => x.id === rid); if(!r) continue;
+    if(r.cat === 'kool') vers.push(r.naam.toLowerCase());
+    if(rid.startsWith('vz-')){
+      const d = seedDishes().find(x => 'vz-' + x.id === rid);
+      if(d) vers.push('verse ' + d.serveerMet);
     }
   }
-  const kd = S.freezer.cookdayChecked;
+  return vers.join(', ');
+}
+/* Boodschappenlijst genereren: alle ingrediënten van de geplande gerechten,
+   identieke regels samengevoegd met een aantal ervoor. Afgevinkte regels
+   blijven afgevinkt zolang de regel niet verandert. */
+function genereerBoodschappen(){
+  const rs = alleRecepten();
+  const counts = new Map();
+  for(const p of S.freezer.plan) for(const rid of p.recepten){
+    const r = rs.find(x => x.id === rid); if(!r || r.cat === 'mix') continue;
+    for(const ing of (r.ingr || [])) counts.set(ing, (counts.get(ing) || 0) + 1);
+  }
+  const oud = new Map((S.grocery.lists.plan || []).map(x => [x.item, x.checked]));
+  S.grocery.lists.plan = [...counts.entries()].map(([ing, n]) => {
+    const item = (n > 1 ? n + '× ' : '') + ing;
+    return {item, checked: oud.get(item) || false};
+  });
+}
+/* Kookdag-draaiboek genereren: langste suddertijd eerst (zoals het originele
+   systeem), per gerecht de echte bereidingsstappen, koolhydraten expliciet
+   uitgesteld naar de eetdag, en de vaste portioneer-/invriesstappen als slot. */
+function genereerDraaiboek(){
+  const rs = alleRecepten();
+  if(!S.freezer.plan.length){ S.freezer.draaiboek = []; return; }
+  const volgorde = [...S.freezer.plan].sort((a, b) => planKookTijd(b, rs) - planKookTijd(a, rs));
+  const fmtT = min => Math.floor(min / 60) + ':' + String(min % 60).padStart(2, '0');
+  const items = [{txt:'0:00 · Mise en place: alle ingrediënten klaarzetten, snijwerk per gerecht in aparte bakjes'}];
+  let slot = 10;
+  volgorde.forEach((p, i) => {
+    items.push({txt:`± ${fmtT(slot)} · Gerecht ${i + 1}: ${p.naam}${i === 0 ? ' — langste suddertijd, dus eerst op het vuur' : ''}`});
+    for(const rid of p.recepten){
+      const r = rs.find(x => x.id === rid); if(!r || r.cat === 'mix') continue;
+      if(r.cat === 'kool'){ items.push({txt:`→ ${r.naam}: niet nu koken — vers bereiden op de eetdag`}); continue; }
+      for(const s of r.stappen){
+        if(/^invriezen\?/i.test(s)) continue;
+        items.push({txt:`→ ${s}`});
+      }
+    }
+    slot += 25;
+  });
+  items.push({txt:`± ${fmtT(slot)} · Alles afmaken en proeven`});
+  items.push({txt:`± ${fmtT(slot + 15)} · Portioneren in platte zakken, labelen (gerecht + datum), plat invriezen op een bakplaat`});
+  items.push({txt:'Volgende dag · Zakken rechtop zetten en hieronder "Ronde gekookt ✓" aantikken'});
+  const oud = new Map((S.freezer.draaiboek || []).map(x => [x.txt, x.checked]));
+  S.freezer.draaiboek = items.map(x => ({txt:x.txt, checked: oud.get(x.txt) || false}));
+}
+function herbouwPlanAfgeleiden(){ genereerBoodschappen(); genereerDraaiboek(); }
+function planVoegToe(recepten, naam){
+  if(S.freezer.plan.length >= 4){ toast('Je ronde is vol (4 gerechten) — verwijder eerst een gerecht.'); return; }
+  S.freezer.plan.push({id: uid(), naam, recepten, porties: 4});
+  herbouwPlanAfgeleiden();
+  S.grocery.updated_at = new Date().toISOString();
+  closeModal();
+  save('grocery'); save('freezer');
+  toast('"' + naam + '" toegevoegd aan je kookronde ✓');
+}
+function delPlan(id){
+  const p = S.freezer.plan.find(x => x.id === id); if(!p) return;
+  S.freezer.plan = S.freezer.plan.filter(x => x.id !== id);
+  herbouwPlanAfgeleiden(); save('grocery'); save('freezer');
+  toast('Gerecht uit je ronde gehaald', () => { S.freezer.plan.push(p); herbouwPlanAfgeleiden(); save('grocery'); save('freezer'); });
+}
+function setPlanPorties(id, v){
+  const p = S.freezer.plan.find(x => x.id === id); if(!p) return;
+  p.porties = Math.max(1, Math.min(12, Number(v) || 4));
+  save('freezer');
+}
+function openCompleetKeuze(){
+  const rs = alleRecepten().filter(r => r.macros && (r.cat === 'vriezer' || r.eigen));
+  openModal(`<h3 id="modal-titel">Kies een compleet gerecht</h3>
+    <div class="hint" style="margin-bottom:.5rem">Eén pan, klaar voor de vriezer. Zelf iets samenstellen kan met "Mix zelf".</div>
+    ${rs.map(r => `<div class="rij">
+      <div class="groei"><div class="titel">${esc(r.naam)}${r.veg ? ' <span class="veg-tag">VEG</span>' : ''}</div>
+        <div class="sub">${r.macros.kcal} kcal · ${r.macros.eiwit} g eiwit p.p.${r.tijd ? ' · ⏱ ' + r.tijd + ' min' : ''}</div></div>
+      <button class="knop klein terra" onclick="planVoegToe(['${r.id}'], ${JSON.stringify(r.naam).replace(/"/g, '&quot;')})">kies</button>
+    </div>`).join('')}
+    <div class="formrij"><button class="knop licht" style="flex:1" onclick="closeModal()">Sluiten</button></div>`);
+}
+function openMixKeuze(){
+  const rs = alleRecepten();
+  const groepen = [
+    ['Eiwit', ['kip','rund','vis','ei','vega']],
+    ['Saus', ['saus']],
+    ['Koolhydraat (vers op de eetdag)', ['kool']],
+    ['Groente', ['groente']],
+  ];
+  const secties = groepen.map(([label, cats]) => {
+    const opties = rs.filter(r => cats.includes(r.cat));
+    return `<div class="veldlabel">${label}</div>` + opties.map(r => `<label style="display:flex;align-items:center;gap:.5rem;padding:.3rem 0;font-size:.9rem">
+      <input type="checkbox" class="chk mix-check" value="${r.id}" data-kcal="${r.macros ? r.macros.kcal : 0}" data-eiwit="${r.macros ? r.macros.eiwit : 0}" data-naam="${esc(r.naam)}" onchange="updateMixPreview()">
+      <span style="flex:1">${esc(r.naam)}</span>
+      <span class="sub" style="font-size:.72rem;color:var(--grijs)">${r.macros ? r.macros.kcal + ' kcal · ' + r.macros.eiwit + 'g eiwit' : ''}</span>
+    </label>`).join('');
+  }).join('');
+  openModal(`<h3 id="modal-titel">Mix je eigen gerecht</h3>
+    <div class="hint" style="margin-bottom:.5rem">Combineer componenten tot één gerecht — bijv. rijst + romige tomatensaus + gegrilde kipfilet. Macro's worden opgeteld; kruiden doe je met je voorgemaakte mixen.</div>
+    ${secties}
+    <input id="mix-naam" placeholder="Naam (leeg = automatisch)" style="width:100%;margin-top:.7rem">
+    <div class="macro-regel" id="mix-preview" style="margin-top:.5rem">Nog niets gekozen.</div>
+    <div class="formrij">
+      <button class="knop terra" style="flex:1" onclick="addMixVanuitDialog()">+ toevoegen aan ronde</button>
+      <button class="knop licht" onclick="closeModal()">Annuleer</button>
+    </div>`);
+}
+function updateMixPreview(){
+  const checks = [...document.querySelectorAll('.mix-check:checked')];
+  const el = $('#mix-preview'); if(!el) return;
+  if(!checks.length){ el.textContent = 'Nog niets gekozen.'; return; }
+  const kcal = checks.reduce((s, c) => s + Number(c.dataset.kcal), 0);
+  const eiwit = checks.reduce((s, c) => s + Number(c.dataset.eiwit), 0);
+  el.innerHTML = checks.map(c => c.dataset.naam).join(' + ') + ` — <b>${kcal} kcal · ${eiwit} g eiwit</b> per portie`;
+}
+function addMixVanuitDialog(){
+  const checks = [...document.querySelectorAll('.mix-check:checked')];
+  if(!checks.length){ toast('Kies minstens één onderdeel.'); return; }
+  const naam = $('#mix-naam').value.trim() || checks.map(c => c.dataset.naam).join(' + ');
+  planVoegToe(checks.map(c => c.value), naam);
+}
+function rondeGekookt(){
+  if(!S.freezer.plan.length){ toast('Plan eerst je gerechten voor deze ronde.'); return; }
+  for(const p of S.freezer.plan){
+    const m = planMacros(p);
+    const vers = planVersErbij(p);
+    const bestaand = S.freezer.voorraad.find(v => v.naam === p.naam);
+    if(bestaand){ bestaand.porties += p.porties; bestaand.macros = m; bestaand.versErbij = vers; }
+    else S.freezer.voorraad.push({id: uid(), naam: p.naam, recepten: p.recepten, porties: p.porties, lastEaten: null, macros: m, versErbij: vers});
+  }
+  S.freezer.lastCookDate = todayISO();
+  for(const s of S.freezer.draaiboek) s.checked = false;
+  save('freezer');
+  toast('Ronde gekookt ✓ — alles staat in je voorraad');
+}
+function voorraadPlus(id, n){
+  const v = S.freezer.voorraad.find(x => x.id === id); if(!v) return;
+  v.porties = Math.max(0, v.porties + n);
+  save('freezer');
+}
+function voorraadGegeten(id){
+  const v = S.freezer.voorraad.find(x => x.id === id); if(!v || v.porties < 1) return;
+  v.porties -= 1; v.lastEaten = todayISO();
+  if(v.macros) logMaaltijd(v.naam, null, 1, v.macros, todayISO());
+  save('freezer');
+  toast('Portie ' + v.naam + ' gegeten' + (v.macros ? ' & gelogd (' + v.macros.eiwit + ' g eiwit)' : '') + ' ✓');
+}
+function delVoorraad(id){
+  const v = S.freezer.voorraad.find(x => x.id === id); if(!v) return;
+  S.freezer.voorraad = S.freezer.voorraad.filter(x => x.id !== id); save('freezer');
+  toast('Uit voorraad verwijderd', () => { S.freezer.voorraad.push(v); save('freezer'); });
+}
+function toggleDraaiboek(i){ S.freezer.draaiboek[i].checked = !S.freezer.draaiboek[i].checked; save('freezer'); }
+function bouwKookronde(){
+  const kook = volgendeKookdatum();
+  const rs = alleRecepten();
+  /* plan */
+  const planRows = S.freezer.plan.map(p => {
+    const m = planMacros(p);
+    const onderdelen = p.recepten.map(rid => (rs.find(x => x.id === rid) || {}).naam).filter(Boolean).join(' + ');
+    return `<div class="rij">
+      <div class="groei"><div class="titel">${esc(p.naam)}</div>
+        <div class="sub">${p.recepten.length > 1 ? esc(onderdelen) + ' · ' : ''}<b>${m.kcal} kcal · ${m.eiwit} g eiwit</b> p.p.</div></div>
+      <label style="font-size:.72rem;color:var(--grijs)">porties <input type="number" min="1" max="12" value="${p.porties}" style="width:60px" onchange="setPlanPorties('${p.id}',this.value)"></label>
+      <button class="del" onclick="delPlan('${p.id}')" aria-label="verwijderen">×</button>
+    </div>`;
+  }).join('') || '<div class="leeg">Nog geen gerechten gepland — kies hieronder.</div>';
+  /* draaiboek */
+  const db = S.freezer.draaiboek;
+  const dbHtml = db.length ? db.map((s, i) => `<div class="rij ${s.checked ? 'klaar':''}" style="${s.txt.startsWith('→') ? 'padding-left:1.4rem' : ''}">
+      <input type="checkbox" class="chk" ${s.checked ? 'checked':''} onchange="toggleDraaiboek(${i})">
+      <div class="groei ${s.txt.startsWith('→') ? '' : 'titel'}" style="font-size:.88rem">${esc(s.txt)}</div>
+    </div>`).join('') : '<div class="leeg">Plan gerechten, dan genereer ik hier je persoonlijke draaiboek.</div>';
+  /* voorraad */
+  const voorraadRows = S.freezer.voorraad.map(v => {
+    const [cls, txt] = dishStatus(v);
+    return `<div class="rij">
+      <div class="groei"><div class="titel">${esc(v.naam)}</div>
+        <div class="sub"><span class="badge ${cls}">${txt}</span>${v.macros ? ' · ' + v.macros.kcal + ' kcal · ' + v.macros.eiwit + ' g eiwit p.p.' : ''}${v.versErbij ? ' · vers erbij: ' + esc(v.versErbij) : ''}${v.lastEaten ? ' · laatst ' + fmtDate(v.lastEaten) : ''}</div></div>
+      <button class="iconbtn mini" onclick="voorraadPlus('${v.id}',-1)" aria-label="portie eraf">−</button>
+      <span class="porties-groot">${v.porties}</span>
+      <button class="iconbtn mini" onclick="voorraadPlus('${v.id}',1)" aria-label="portie erbij">+</button>
+      <button class="knop klein terra" onclick="voorraadGegeten('${v.id}')" title="portie gegeten">🍽</button>
+      <button class="del" onclick="delVoorraad('${v.id}')" aria-label="verwijderen">×</button>
+    </div>`;
+  }).join('') || '<div class="leeg">Nog niets op voorraad — plan en kook je eerste ronde.</div>';
   return `
     <div class="card soft">
       <h2>Rotatie</h2>
@@ -1191,22 +1422,27 @@ function bouwVriezer(){
         <label style="font-size:.85rem">Laatste kookronde:
           <input type="date" value="${S.freezer.lastCookDate || ''}" onchange="setKookdatum(this.value)"></label>
         <label style="font-size:.85rem">Cyclus:
-          <input type="number" min="7" max="31" value="${Number(S.settings.cycleDays)||16}" style="width:70px" onchange="setCyclus(this.value)"> dagen</label>
+          <input type="number" min="7" max="31" value="${Number(S.settings.cycleDays) || 16}" style="width:70px" onchange="setCyclus(this.value)"> dagen</label>
       </div>
       <p style="margin-top:.6rem;font-size:.92rem">
-        ${kook ? `Volgende kookronde: <strong>${fmtDate(kook)}</strong> (${daysUntil(kook) < 0 ? '<span class="badge b-rood">over tijd</span>' : 'over '+daysUntil(kook)+' dagen'})` : 'Vul je laatste kookdatum in om de rotatie te starten.'}
-        · Aan de beurt: <strong>Ronde ${S.freezer.nextRound} — ${RONDE_NAMEN[S.freezer.nextRound]}</strong></p>
-      <div class="formrij"><button class="knop terra" onclick="rondeGekookt()">Ronde ${S.freezer.nextRound} gekookt ✓ (alle 4 op 4 porties)</button></div>
+        ${kook ? `Volgende kookronde: <strong>${fmtDate(kook)}</strong> (${daysUntil(kook) < 0 ? '<span class="badge b-rood">over tijd</span>' : 'over ' + daysUntil(kook) + ' dagen'})` : 'Vul je laatste kookdatum in om de rotatie te starten.'}</p>
+      <div class="formrij"><a class="knop klein licht" style="text-decoration:none;display:inline-flex;align-items:center" target="_blank" rel="noopener noreferrer"
+        href="${gcalLink('Kookronde (' + (S.freezer.plan.length || 4) + ' gerechten)', kook || todayISO(), '14:00', '17:00', 'LIFE OS kookdag — draaiboek en boodschappenlijst staan in de app.')}">📅 Plan in agenda</a></div>
     </div>
-    <div class="card"><h2>Vriezerinventaris</h2>${inv}</div>
-    <details class="card" data-key="kookdag"><summary>Kookdag-draaiboek (± 2¾ uur) <span class="badge b-grijs">${kd.filter(Boolean).length}/8</span></summary>
-      ${KOOKDAG_STAPPEN.map(([tijd, stap], i) => `<div class="rij ${kd[i]?'klaar':''}">
-        <input type="checkbox" class="chk" ${kd[i]?'checked':''} onchange="toggleKookdag(${i})">
-        <div class="groei"><div class="titel">${esc(stap)}</div><div class="sub">${tijd}</div></div></div>`).join('')}
-      <div class="formrij"><button class="knop klein licht" onclick="resetKookdag()">Draaiboek resetten</button>
-      <a class="knop klein" style="text-decoration:none;display:inline-flex;align-items:center" target="_blank" rel="noopener noreferrer"
-        href="${gcalLink('Kookronde '+S.freezer.nextRound+' — '+RONDE_NAMEN[S.freezer.nextRound], kook || todayISO(), '14:00','16:30','LIFE OS kookdag: 4 gerechten, draaiboek in de app.')}">📅 Plan in agenda</a></div>
+    <div class="card">
+      <h2>Plan je ronde <span class="badge ${S.freezer.plan.length === 4 ? 'b-groen' : 'b-grijs'}">${S.freezer.plan.length}/4 gerechten</span></h2>
+      ${planRows}
+      <div class="formrij">
+        <button class="knop" onclick="openCompleetKeuze()">+ compleet gerecht</button>
+        <button class="knop licht" onclick="openMixKeuze()">+ mix zelf</button>
+      </div>
+      ${S.freezer.plan.length ? `<div class="formrij"><button class="knop terra" onclick="rondeGekookt()">Ronde gekookt ✓ (alles naar voorraad)</button></div>` : ''}
+      <div class="hint">De boodschappenlijst (🛒) en het draaiboek hieronder worden automatisch uit je plan samengesteld.</div>
+    </div>
+    <details class="card" data-key="draaiboek" ${db.length ? 'open' : ''}><summary>Kookdag-draaiboek <span class="badge b-grijs">${db.filter(x => x.checked).length}/${db.length}</span></summary>
+      ${dbHtml}
     </details>
+    <div class="card"><h2>Voorraad (vriezer)</h2>${voorraadRows}</div>
     <details class="card soft" data-key="regels"><summary>Regels (Voedingscentrum)</summary>
       <ul style="padding-left:1.2rem;font-size:.88rem;margin-top:.5rem">
         <li>Saus invriezen, koolhydraten (rijst/pasta/puree) altijd vers koken</li>
@@ -1220,33 +1456,10 @@ function bouwVriezer(){
       </ul>
     </details>`;
 }
-function portiesPlus(id, n){
-  const d = S.freezer.dishes.find(x => x.id === id); if(!d) return;
-  d.porties = Math.max(0, d.porties + n);
-  save('freezer');
-}
-function portieGegeten(id){
-  const d = S.freezer.dishes.find(x => x.id === id); if(!d || d.porties < 1) return;
-  d.porties -= 1; d.lastEaten = todayISO();
-  const m = VRIEZER_MACROS[id];
-  if(m) logMaaltijd(d.naam, 'vz-' + id, 1, m, todayISO()); /* vriezerportie telt mee in het maaltijdlog */
-  save('freezer');
-  toast('Portie ' + d.naam + ' gegeten' + (m ? ' & gelogd (' + m.eiwit + ' g eiwit)' : '') + ' ✓');
-}
 function setKookdatum(v){ S.freezer.lastCookDate = v || null; save('freezer'); }
 function setCyclus(v){ S.settings.cycleDays = Math.max(7, Math.min(31, Number(v)||16)); save('settings'); }
-function rondeGekookt(){
-  const r = S.freezer.nextRound;
-  for(const d of S.freezer.dishes) if(d.ronde === r) d.porties = 4;
-  S.freezer.lastCookDate = todayISO();
-  S.freezer.nextRound = r === 4 ? 1 : r + 1;
-  S.freezer.cookdayChecked = [false,false,false,false,false,false,false,false];
-  save('freezer');
-}
 function toggleGrocery(key, i){ S.grocery.lists[key][i].checked = !S.grocery.lists[key][i].checked; save('grocery'); }
 function resetGrocery(key){ for(const x of S.grocery.lists[key]) x.checked = false; save('grocery'); }
-function toggleKookdag(i){ S.freezer.cookdayChecked[i] = !S.freezer.cookdayChecked[i]; save('freezer'); }
-function resetKookdag(){ S.freezer.cookdayChecked = [false,false,false,false,false,false,false,false]; save('freezer'); }
 /* ================= Sport ================= */
 function gewichtChart(){
   const w = gewichtGesorteerd().slice(-30);
@@ -1742,7 +1955,7 @@ function renderAgenda(){
     <div class="card"><h2>Snelkoppelingen</h2>
       <div class="formrij">
         <a class="knop licht" style="text-decoration:none" target="_blank" rel="noopener noreferrer"
-          href="${gcalLink('Kookronde '+S.freezer.nextRound+' — '+RONDE_NAMEN[S.freezer.nextRound], kook, '14:00','16:30','LIFE OS kookdag — draaiboek staat in de app.')}">🍳 Kookronde (2½ u)</a>
+          href="${gcalLink('Kookronde (' + (S.freezer.plan.length || 4) + ' gerechten)', kook, '14:00','17:00','LIFE OS kookdag — draaiboek en boodschappenlijst staan in de app.')}">🍳 Kookronde</a>
         <a class="knop licht" style="text-decoration:none" target="_blank" rel="noopener noreferrer"
           href="${gcalLink('Training', addDays(todayISO(),1), '17:00','18:00','Gepland via LIFE OS.')}">🏋️ Training (morgen)</a>
       </div>

@@ -2,7 +2,7 @@
 
 Persoonlijke alles-in-één app van Bink: componenten-kookboek met geverifieerde voedingswaarden en maaltijdlog, vriezervoorraad & 16-dagen-kookrondes, sport met gewicht- en eiwittracker, evidence-based leren, taken, geld en Google Agenda.
 
-**Eten** = kookboek (bereidingen × sauzen × koolhydraten, vrij te mixen + kruidenmixen om te batchen), maaltijdlog met dagtotalen tegen je eiwit-/caloriedoel, en het 16-dagen vriezersysteem. **Sport** = trainingslog, dagelijkse wegingen met 7-daags trendgemiddelde, en doelen op basis van Morton 2018 (eiwit) en Mifflin-St Jeor (kcal).
+**Eten** = kookboek (bereidingen × sauzen × koolhydraten, vrij te mixen + kruidenmixen om te batchen), maaltijdlog met dagtotalen tegen je eiwit-/caloriedoel, en de **kookronde-planner**: kies per 16-daagse ronde 4 gerechten — compleet of zelf gemixt uit componenten — en de app genereert automatisch de boodschappenlijst én het kookdag-draaiboek (langste suddertijd eerst, koolhydraten vers op de eetdag). Gekookte gerechten staan als voorraad in de vriezer en zijn met één tik als maaltijd te loggen, mét de opgetelde macro's van de mix. **Sport** = trainingslog, dagelijkse wegingen met 7-daags trendgemiddelde, en doelen op basis van Morton 2018 (eiwit) en Mifflin-St Jeor (kcal).
 
 **Kern:** `index.html` — vanilla HTML/CSS/JS, geen build tools, geen dependencies. Daarnaast alleen statische assets: `apple-touch-icon.png` + `icon-192/512.png` (iOS accepteert géén SVG/data-URL als beginscherm-icoon) en `manifest.webmanifest` (voor Android/Chrome-installatie). Data staat lokaal in `localStorage` (key `lifeos_v1`), met optionele Supabase-sync tussen apparaten.
 
