@@ -88,6 +88,30 @@ test('kookronde: compleet gerecht plannen, koken, portie gegeten + maaltijdlog',
   expect(st.meals[0].eiwit).toBeGreaterThan(20);
 });
 
+test('boodschappen: hoeveelheden worden echt opgeteld over gerechten heen', async ({ page }) => {
+  await page.goto(APP);
+  await page.evaluate(() => {
+    planVoegToe(['vz-chili'], 'Chili con carne');   // 1 ui, 2 tenen knoflook, 1 blik tomatenblokjes
+    planVoegToe(['vz-dal'], 'Rode linzen-dal');     // 2 uien, 2 tenen knoflook, 1 blik tomatenblokjes
+  });
+  const bood = await page.evaluate(() => window.lifeos.store.grocery.lists.plan.map((x) => x.item));
+  expect(bood).toContain('3 uien');                    // 1 + 2, met correct meervoud
+  expect(bood).toContain('4 tenen knoflook');          // 2 + 2
+  expect(bood).toContain('2 blikken tomatenblokjes');  // blik -> blikken
+  expect(bood).not.toContain('1 ui');
+  expect(bood).not.toContain('2 uien');
+  // parser-randgevallen
+  const r = await page.evaluate(() => ({
+    grammen: fmtIngredient(1150, 'g', 'kippendijfilet'),      // g -> kg boven 1000
+    los: parseIngredient('scheut azijn'),                     // geen hoeveelheid
+    breuk: parseIngredient('1½ el BBQ-rub'),
+  }));
+  expect(r.grammen).toBe('1,15 kg kippendijfilet');
+  expect(r.los).toEqual({ qty: 1, unit: '×', naam: 'scheut azijn' });
+  expect(r.breuk.qty).toBe(1.5);
+  expect(r.breuk.unit).toBe('el');
+});
+
 test('kookronde: zelf mixen — componenten worden één gerecht met opgetelde macro’s', async ({ page }) => {
   await page.goto(APP);
   await page.evaluate(() => { window.showTab('eten'); etenView = 'ronde'; renderEten(); });
