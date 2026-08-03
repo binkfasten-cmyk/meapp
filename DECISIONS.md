@@ -79,7 +79,26 @@ Alle regels in de app zijn tegen voedingscentrum.nl gecontroleerd:
 - Opwarmen "stomend heet, door-en-door"; ≥75°C kerntemperatuur is het onderliggende getal (NVWA/hygiënecode) — **bevestigd**, formulering aangescherpt.
 - **Correctie:** de oorspronkelijke regel "nooit opnieuw invriezen zonder eerst te verhitten" suggereerde dat verhitten hernieuwd invriezen goedmaakt. Het officiële standpunt: een ontdooid/opgewarmd **maaltijdrestje nooit opnieuw invriezen** — weggooien. De enige toegestane route is rauwe diepvriesingrediënten die je tot een gerecht doorverhit: dat gerecht mag daarna één keer de vriezer in. De app-tekst is hierop aangepast. ([Voedingscentrum: tweede keer invriezen](https://www.voedingscentrum.nl/nl/service/vraag-en-antwoord/koken-en-bewaren/kun-je-een-maaltijdrestje-tweede-keer-invriezen.aspx))
 
-## 8. Bewuste beperkingen (v1)
+## 8. Kookboek & voedingswaarden
+
+**Hoe het werkt:** het kookboek is component-gebaseerd — bereidingen (kip/rund/vis/ei/vega), sauzen, koolhydraten, groenten en kruidenmixen die vrij te combineren zijn, plus de 16 vriezergerechten en eigen recepten. Elk gerecht (behalve mixen) heeft macro's per portie; één tik logt het als maaltijd van vandaag.
+
+**Toegepaste best practices:**
+- **Voedingswaarden geverifieerd** tegen USDA FoodData Central en NEVO-gebaseerde bronnen (Voedingscentrum, voedingswaardetabel.nl), per ingrediënt met FDC-id of bron gedocumenteerd; per-portie-macro's van seed-recepten zijn daaruit berekend voor de *bereide* toestand (gegaard gewicht wijkt sterk af van rauw — kipfilet: 165 kcal/31 g eiwit per 100 g bereid). ([USDA FDC](https://fdc.nal.usda.gov/), [Voedingscentrum](https://www.voedingscentrum.nl))
+- **Nederlandse gehakt-conventie:** NEVO's "rul bereid" rekent het bakvet mee in het gerecht (331 kcal/100 g voor 15%-gehakt) waar USDA's "drained" waarde (218 kcal) het vet weggiet. De app gebruikt de NEVO-stijl, want zo koken Nederlanders — gedocumenteerd zodat het bewust is.
+- **Kruidenmixen:** batch-verhoudingen per potje, met geverifieerde houdbaarheid — piek-aroma ±6 maanden, kwaliteitsvenster 1–2 jaar (McCormick zegt 1–2 jaar voor blends; specerijenhandel noemt 4–8 maanden piek), nooit "bedorven" in voedselveiligheidszin. Dosering ~1 el (≈8 g) per 500 g vlees, conform rub-standaard 1 el per pond. ([McCormick](https://www.mccormick.com/blogs/how-to/how-long-do-spices-last), [RawSpiceBar](https://rawspicebar.com/blogs/spices-101/how-long-do-ground-spices-last))
+- Vriezerporties loggen automatisch mee in het maaltijdlog (één handeling = voorraad − 1 én macro's geteld). Vriezergerecht-macro's zijn schattingen op receptniveau, gemarkeerd als zodanig.
+
+## 9. Voedings- & gewichtsdoelen (Sport-tab)
+
+Alle parameters komen uit de primaire sportvoedingsliteratuur:
+- **Eiwit: default 1,8 g/kg/dag, instelbaar 1,6–2,2.** Morton et al. 2018 (meta-analyse, BJSM): plateau in vetvrije-massawinst bij **1,62 g/kg** (95%-BI 1,03–2,20) — meer dan ~1,6 levert gemiddeld weinig extra op; 2,2 is de bovengrens van de onzekerheid, geen apart "optimum". De AND/DC/ACSM-positie (1,2–2,0 g/kg) dekt expliciet ook adolescente atleten — een postpuberale 17-jarige mag als volwassene gerekend worden. ([Morton 2018](https://pubmed.ncbi.nlm.nih.gov/28698222/), [AND/DC/ACSM 2016](https://pubmed.ncbi.nlm.nih.gov/26891166/))
+- **Dagtotaal boven maaltijdverdeling:** ~0,4 g/kg per maaltijd over 4 maaltijden is een nuttige vuistregel (Schoenfeld & Aragon 2018), maar het dagtotaal is de dominante factor — de app toont daarom een dagdoel en geen dwingende maaltijdverdeling. ([Schoenfeld & Aragon 2018](https://pubmed.ncbi.nlm.nih.gov/29497353/))
+- **Caloriedoel: Mifflin-St Jeor** (de door de Academy of Nutrition & Dietetics aanbevolen RMR-formule) × 1,5 activiteit (3×/week training); lean bulk = **+300 kcal** (~10–15% surplus; Iraki/Helms 2019 adviseren 10–20%). Richttempo aankomen **0,25–0,5% lichaamsgewicht/week** — de app waarschuwt boven de 0,5%. ([Iraki et al. 2019](https://doi.org/10.3390/sports7070154), [AND over Mifflin-St Jeor](https://www.andeal.org/template.cfm?template=guide_summary&key=621))
+- **Tiener-specifiek:** geen agressieve cut — de app biedt alleen "onderhoud" en "lean bulk" en benoemt dat expliciet (lage energiebeschikbaarheid is een gezondheidsrisico; AND/DC/ACSM: ≥30 kcal/kg vetvrije massa). Creatine wordt bewust níét proactief geadviseerd (ISSN-voorwaarden voor minderjarigen: postpuberaal, serieus trainend, onder begeleiding).
+- **Wegen: dagelijks, zelfde omstandigheden, 7-daags voortschrijdend gemiddelde.** Dagschommelingen van 1–2% zijn vocht/glycogeen; alle doellogica (trend, waarschuwingen) draait op het gemiddelde, nooit op een losse meting — de methode die o.a. MacroFactor en Helms hanteren. ([MacroFactor methodologie](https://help.macrofactorapp.com/en/articles/21-weight-trend))
+
+## 10. Bewuste beperkingen (v1)
 
 - **Geen service worker/offline-cache voor de gehoste versie** — de data staat lokaal en de app is één bestand, maar de eerste load vereist netwerk. v2-kandidaat, samen met echte push-notificaties.
 - **Geen auth op de sync**: zie §3; de UI waarschuwt ervoor en het upgradepad ligt klaar.

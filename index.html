@@ -177,6 +177,16 @@ dialog.modal h3{margin-bottom:.6rem}
 #toast.zichtbaar{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
 #toast button{background:none;color:var(--terra);font-weight:700;padding:.3rem .5rem;min-height:36px}
 input.ongeldig{border-color:#c05560;outline:2px solid #c05560;outline-offset:1px}
+/* ---------- voeding ---------- */
+dialog.modal{max-height:88vh;overflow-y:auto}
+.bar{background:#ece7dd;border-radius:999px;height:10px;overflow:hidden;margin-top:.3rem}
+.bar span{display:block;height:100%;background:var(--groen);border-radius:999px}
+.bar span.over{background:var(--terra-diep)}
+.macro-regel{display:flex;gap:.9rem;font-size:.78rem;color:var(--grijs);flex-wrap:wrap}
+.macro-regel b{color:var(--groen)}
+.dagdots{display:flex;gap:6px;margin-top:.4rem}
+.dagdot{width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.6rem;background:#ddd6ca;color:#fff;font-weight:700}
+.dagdot.raak{background:#7aa874}.dagdot.mis{background:#e0b9b0}
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
 }
@@ -286,10 +296,262 @@ const KOOKDAG_STAPPEN = [
 ];
 const TECHNIEKEN = ['Retrieval','Spaced review','Interleaved oefenen','Self-explanation','Dual coding','Herlezen (betrapt)'];
 const DOMEINEN = ['School','Werk','Business','Thuis'];
+/* ================= kookboek-seed =================
+   Componenten-kookboek: bereidingen (eiwit), sauzen, koolhydraten, groenten en
+   kruidenmixen — vrij te combineren. Macro's per portie, gebaseerd op
+   USDA/NEVO-waarden voor de bereide toestand. Mixen hebben geen macro's
+   (verwaarloosbaar) maar wel batch-, houdbaarheids- en doseerinfo. */
+const CAT_NAMEN = {kip:'Kip', rund:'Rund & gehakt', vis:'Vis', ei:'Eieren', vega:'Vega-eiwit', saus:'Sauzen', kool:'Koolhydraten', groente:'Groenten', mix:'Kruidenmixen', vriezer:'Vriezergerechten'};
+const RECEPTEN = [
+  /* ---- kip: zes basisbereidingen ---- */
+  {id:'kip-grill', naam:'Gegrilde kipfilet', cat:'kip', tijd:15, porties:2,
+   ingr:['500 g kipfilet','1 el olijfolie','1 el kruidenmix naar keuze (Cajun/Italiaans/shoarma)'],
+   stappen:['Snijd de filets horizontaal open (vlinderen) of sla ze plat tot gelijke dikte.','Wrijf in met olie en kruidenmix.','Grillpan gloeiend heet: 3–4 min per kant, niet schuiven.','5 min laten rusten onder folie, dan pas snijden.'],
+   tip:'Gelijke dikte = gelijkmatig gaar. Rusttijd houdt hem sappig.', combi:'Met elke saus en elk koolhydraat.',
+   macros:{kcal:320, eiwit:58, khd:1, vet:9}},
+  {id:'kip-oven', naam:'Kippendijen uit de oven', cat:'kip', tijd:35, porties:2,
+   ingr:['600 g kippendijfilet','1 el olie','1 el kruidenmix (BBQ-rub of shoarma)'],
+   stappen:['Oven op 200°C.','Dijen droogdeppen, mengen met olie en kruiden.','25–30 min in de oven tot de randen kleuren.'],
+   tip:'Dijen drogen minder snel uit dan filet — vergevingsgezind voor beginners.', combi:'Rijst + yoghurt-knoflooksaus, of wraps.',
+   macros:{kcal:440, eiwit:56, khd:1, vet:22}},
+  {id:'kip-poach', naam:'Gepocheerde kipfilet (trekkip)', cat:'kip', tijd:20, porties:2,
+   ingr:['500 g kipfilet','1 bouillonblokje','laurierblaadje'],
+   stappen:['Filets in een pan, net onder water + bouillonblokje en laurier.','Aan de kook brengen, dan vuur laag: 12–15 min zachtjes (niet koken).','Uit laten lekken en met twee vorken uit elkaar trekken.'],
+   tip:'Zachtste bereiding — ideaal voor wraps, salades en sandwiches.', combi:'Wraps + yoghurtsaus, of door pastasaus.',
+   macros:{kcal:300, eiwit:57, khd:0, vet:7}},
+  {id:'kip-airfryer', naam:'Krokante airfryer-kip', cat:'kip', tijd:20, porties:2,
+   ingr:['500 g kippendij of -filet in blokjes','1 el maizena','1 el kruidenmix (Cajun)','1 el olie'],
+   stappen:['Blokjes mengen met olie, dan met maizena + kruidenmix bestuiven.','Airfryer 200°C: 12–15 min, halverwege schudden.'],
+   tip:'Maizena maakt het korstje — zonder frituren.', combi:'Teriyaki- of satésaus + rijst.',
+   macros:{kcal:380, eiwit:57, khd:4, vet:13}},
+  {id:'kip-stoof', naam:'Draadjeskip (pulled chicken-basis)', cat:'kip', tijd:50, porties:3,
+   ingr:['600 g kippendijfilet','1 ui','2 tenen knoflook','200 ml passata of bouillon','1 el kruidenmix'],
+   stappen:['Ui fruiten, knoflook en kruiden 1 min mee.','Dijen + vocht erbij, deksel erop, 40–45 min zachtjes sudderen.','Met twee vorken uit elkaar trekken en door het vocht roeren.'],
+   tip:'Basis voor BBQ pulled chicken (BBQ-rub + scheut ketchup/honing) of Mexicaans (tacomix).', combi:'Wraps, rijst of puree.',
+   macros:{kcal:290, eiwit:38, khd:4, vet:13}},
+  {id:'kip-spies', naam:'Kipspiesjes met yoghurtmarinade', cat:'kip', tijd:25, porties:2,
+   ingr:['500 g kipfilet in blokjes','150 g Griekse yoghurt','2 tenen knoflook','1 el shoarma- of kerriemix','citroensap'],
+   stappen:['Yoghurt, knoflook, kruiden en citroen mengen; kip er min. 30 min in marineren (mag een nacht).','Aan spiesen rijgen.','Grillpan of oven-grill: 10–12 min, regelmatig draaien.'],
+   tip:'Yoghurt maakt kip mals — het zuur breekt eiwitten zachtjes af.', combi:'Rijst + geroosterde groenten.',
+   macros:{kcal:390, eiwit:62, khd:5, vet:13}},
+  /* ---- rund & gehakt ---- */
+  {id:'rund-biefstuk', naam:'Biefstuk perfect gebakken', cat:'rund', tijd:15, porties:2,
+   ingr:['2 biefstukken van 200 g','klontje roomboter','zout, peper'],
+   stappen:['Biefstuk 30 min op kamertemperatuur; droogdeppen, zouten.','Pan gloeiend heet met boter: 2–3 min per kant (medium-rare).','Laatste minuut arroseren (boter erover lepelen).','5 min rusten onder folie.'],
+   tip:'Droogdeppen = korst. Rusten = sappen herverdelen.', combi:'Chimichurri + ovenaardappelen.',
+   macros:{kcal:290, eiwit:44, khd:0, vet:13}},
+  {id:'rund-rul', naam:'Rul gehakt (basis)', cat:'rund', tijd:15, porties:3,
+   ingr:['500 g rundergehakt','1 ui','2 tenen knoflook','1 el kruidenmix (taco/Italiaans)'],
+   stappen:['Gehakt in een hete pan zonder te roeren laten aanbakken, dan losbreken.','Ui en knoflook erbij, 3 min meebakken.','Kruidenmix + scheutje water, 2 min doorroeren.'],
+   tip:'Eerst laten liggen = bruining = smaak (Maillard).', combi:'Taco’s, pastasaus, rijstbowls.',
+   macros:{kcal:390, eiwit:35, khd:3, vet:26}},
+  {id:'rund-ballen', naam:'Gehaktballen', cat:'rund', tijd:30, porties:4,
+   ingr:['500 g half-om-half of rundergehakt','1 ei','3 el paneermeel','1 tl paprikapoeder, nootmuskaat, zout, peper'],
+   stappen:['Alles mengen, niet te lang kneden; 4 ballen vormen.','Rondom bruin bakken in boter.','Deksel erop, 15 min zachtjes garen (of in tomatensaus laten sudderen).'],
+   tip:'Te lang kneden = stevige bal. Los mengen = luchtig.', combi:'Tomatensaus + pasta of puree.',
+   macros:{kcal:290, eiwit:21, khd:6, vet:17}},
+  {id:'rund-stoof', naam:'Stoofvlees-basis (riblappen)', cat:'rund', tijd:190, porties:3,
+   ingr:['600 g riblappen','2 uien','1 el bloem','laurier + kruidnagel','scheut azijn','bouillon'],
+   stappen:['Vlees in stukken, zouten, door de bloem; hard aanbraden in boter.','Uien meebakken; bouillon, azijn, laurier en kruidnagel erbij.','Deksel schuin erop, 3 uur op het laagste vuur (of 150°C-oven).'],
+   tip:'Klaar als het uit elkaar valt onder een vork. Basis voor hachee en goulash.', combi:'Puree + rode kool, of rijst.',
+   macros:{kcal:340, eiwit:44, khd:5, vet:15}},
+  {id:'rund-burger', naam:'Smash burgers', cat:'rund', tijd:15, porties:3,
+   ingr:['500 g rundergehakt (niet te mager)','zout, peper','3 broodjes of wraps'],
+   stappen:['Gehakt losjes in 3 ballen verdelen — niet kneden, alleen zout/peper erop.','Gloeiend hete pan: bal erin en meteen heel plat drukken.','2 min, omdraaien, 1 min — klaar.'],
+   tip:'Plat drukken op de hitte = maximale korst.', combi:'Broodje + salade, of zonder brood met ovenaardappelen. (Macro’s excl. broodje.)',
+   macros:{kcal:380, eiwit:35, khd:1, vet:26}},
+  /* ---- vis ---- */
+  {id:'vis-zalm', naam:'Zalm uit de oven', cat:'vis', tijd:18, porties:2,
+   ingr:['2 zalmfilets van 125 g','citroen','dille of Italiaanse mix','1 tl olie'],
+   stappen:['Oven op 200°C; zalm op bakpapier, insmeren met olie en kruiden.','12–15 min — klaar als hij net doorschijnend af is in het midden.','Citroen erover.'],
+   tip:'Liever iets te kort dan te lang — zalm gaart na.', combi:'Noedels + teriyaki, of aardappelen + groenten.',
+   macros:{kcal:230, eiwit:22, khd:0, vet:14}},
+  {id:'vis-wit', naam:'Witvis in boter gebakken', cat:'vis', tijd:12, porties:2,
+   ingr:['2 kabeljauwfilets van 150 g','2 el bloem','klont roomboter','citroen'],
+   stappen:['Vis droogdeppen, zouten, licht door de bloem.','Boter laten bruisen: 3–4 min per kant op middelhoog.','Botertje uit de pan + citroen erover.'],
+   tip:'Bloemlaagje beschermt de vis en geeft een goudbruin korstje.', combi:'Puree + geroosterde groenten.',
+   macros:{kcal:230, eiwit:28, khd:6, vet:10}},
+  {id:'vis-tonijn', naam:'Snelle tonijnsalade', cat:'vis', tijd:5, porties:1,
+   ingr:['1 blik tonijn in water (uitgelekt)','2 el Griekse yoghurt','¼ rode ui','citroensap, peper'],
+   stappen:['Alles mengen. Klaar.'],
+   tip:'Goedkoopste snelle eiwitbron die er is — altijd blikken in huis.', combi:'Wrap, boterham of door pasta.',
+   macros:{kcal:160, eiwit:29, khd:3, vet:3}},
+  /* ---- eieren ---- */
+  {id:'ei-omelet', naam:'Omelet met kaas', cat:'ei', tijd:8, porties:1,
+   ingr:['3 eieren','20 g geraspte kaas','klontje boter','bieslook (optioneel)'],
+   stappen:['Eieren loskloppen met zout.','Middelhoog vuur, boter, eieren erin; met een spatel van buiten naar binnen schuiven.','Kaas erop als hij bijna gestold is, dubbelvouwen.'],
+   tip:'Van het vuur af als hij nog nát glanst — hij gaart door.', combi:'Ontbijt of snelle avondmaaltijd + salade.',
+   macros:{kcal:350, eiwit:24, khd:2, vet:28}},
+  {id:'ei-roerei', naam:'Roerei-basis', cat:'ei', tijd:6, porties:1,
+   ingr:['3 eieren','scheutje melk','klontje boter'],
+   stappen:['Laag vuur, boter, eieren erin.','Blijven roeren met een spatel; van het vuur zodra het romig-nat is.'],
+   tip:'Laag en langzaam = romig. Hoog vuur = rubber.', combi:'Volkoren brood; avocado erbij als je wilt bulken.',
+   macros:{kcal:290, eiwit:20, khd:2, vet:22}},
+  /* ---- vega ---- */
+  {id:'vega-tofu', naam:'Krokante tofu', cat:'vega', tijd:25, porties:2,
+   ingr:['400 g stevige tofu','2 el maizena','2 el sojasaus','1 el olie','kruidenmix naar keuze'],
+   stappen:['Tofu 15 min persen tussen keukenpapier met iets zwaars erop.','In blokjes, mengen met sojasaus, dan bestuiven met maizena.','Hete pan of airfryer (200°C, 12 min) tot goudbruin en krokant.'],
+   tip:'Persen is het geheim — natte tofu wordt nooit krokant.', combi:'Teriyaki- of satésaus + noedels.',
+   macros:{kcal:350, eiwit:30, khd:12, vet:20}},
+  {id:'vega-linzen', naam:'Linzen koken (basis)', cat:'vega', tijd:25, porties:2,
+   ingr:['200 g droge groene/bruine linzen','1 bouillonblokje','laurier'],
+   stappen:['Linzen afspoelen; 20 min zachtjes koken in bouillon met laurier.','Afgieten zodra ze gaar maar niet stuk zijn.'],
+   tip:'Niet vooraf zouten met zuur (tomaat) erbij — dan blijven ze hard.', combi:'Door salades, curry of als rijstvervanger.',
+   macros:{kcal:290, eiwit:22, khd:50, vet:1}},
+  {id:'vega-kikker', naam:'Geroosterde kikkererwten', cat:'vega', tijd:25, porties:2,
+   ingr:['1 blik kikkererwten (uitgelekt, drooggedept)','1 el olie','1 el kruidenmix (Cajun of shoarma)'],
+   stappen:['Oven of airfryer 200°C.','Kikkererwten mengen met olie en kruiden.','20 min roosteren tot krokant, halverwege schudden.'],
+   tip:'Ook lekker koud als snack — maar dan zijn ze meteen op.', combi:'Over salades en bowls, of als snack.',
+   macros:{kcal:230, eiwit:9, khd:27, vet:10}},
+  /* ---- sauzen ---- */
+  {id:'saus-tomaat', naam:'Basis-tomatensaus', cat:'saus', tijd:20, porties:3,
+   ingr:['1 ui','2 tenen knoflook','1 el olijfolie','1 blik tomatenblokjes (400 g)','1 el tomatenpuree','1 el Italiaanse mix','snuf suiker'],
+   stappen:['Ui fruiten, knoflook en puree 1 min mee.','Tomaten + kruiden erbij; 15 min zachtjes pruttelen.','Afmaken met zout, peper en een snufje suiker tegen het zuur.'],
+   tip:'De moeder van alle sauzen — zie de varianten hieronder.', combi:'Pasta, gehaktballen, kip, shakshuka-basis.',
+   macros:{kcal:100, eiwit:2, khd:9, vet:5}},
+  {id:'saus-arrabbiata', naam:'Arrabbiata (pittige tomatensaus)', cat:'saus', tijd:20, porties:3,
+   ingr:['Basis-tomatensaus','1 tl chilivlokken (meefruiten met de knoflook)'],
+   stappen:['Als basis-tomatensaus, maar fruit de chilivlokken mee met de knoflook.'],
+   tip:'Hitte meefruiten geeft diepere smaak dan er later bij strooien.', combi:'Pasta + rul gehakt of geroosterde kikkererwten.',
+   macros:{kcal:100, eiwit:2, khd:9, vet:5}},
+  {id:'saus-roomtomaat', naam:'Romige tomatensaus', cat:'saus', tijd:20, porties:3,
+   ingr:['Basis-tomatensaus','100 ml kookroom'],
+   stappen:['Basis-tomatensaus maken; room op het laatst erdoor, niet meer laten koken.'],
+   tip:'Van dezelfde basis: één pan, drie sauzen.', combi:'Pasta + kip, of gnocchi.',
+   macros:{kcal:170, eiwit:3, khd:10, vet:12}},
+  {id:'saus-pestoroom', naam:'Pesto-roomsaus', cat:'saus', tijd:8, porties:2,
+   ingr:['3 el groene pesto','100 ml kookroom','pastawater'],
+   stappen:['Pesto en room zachtjes verwarmen (niet koken).','Losmaken met een scheut pastawater tot sausdikte.'],
+   tip:'Pastawater bindt de saus aan de pasta (zetmeel).', combi:'Pasta + gepocheerde kip en spinazie.',
+   macros:{kcal:230, eiwit:4, khd:4, vet:22}},
+  {id:'saus-sate', naam:'Satésaus', cat:'saus', tijd:10, porties:3,
+   ingr:['4 el pindakaas','150 ml kokosmelk','1 el ketjap manis','1 tl sambal','scheutje citroensap'],
+   stappen:['Alles zachtjes verwarmen en roeren tot een gladde saus.','Te dik? Scheutje water. Afmaken met citroen.'],
+   tip:'Citroen is het geheim — die haalt de saus uit het vlakke.', combi:'Kipspiesjes, tofu, rijstbowls.',
+   macros:{kcal:240, eiwit:6, khd:7, vet:22}},
+  {id:'saus-teriyaki', naam:'Teriyakisaus', cat:'saus', tijd:8, porties:3,
+   ingr:['5 el sojasaus','2 el honing','1 teen knoflook','1 tl geraspte gember','1 tl maizena + water'],
+   stappen:['Sojasaus, honing, knoflook en gember verwarmen.','Maizenapapje erdoor en 1 min laten binden tot glanzende saus.'],
+   tip:'Werkt op alles: kip, zalm, tofu.', combi:'Airfryer-kip of tofu + noedels.',
+   macros:{kcal:70, eiwit:2, khd:15, vet:0}},
+  {id:'saus-curry', naam:'Kokos-currysaus', cat:'saus', tijd:15, porties:3,
+   ingr:['2 el rode currypasta','1 blik kokosmelk (400 ml)','scheut vissaus of sojasaus','limoensap'],
+   stappen:['Currypasta 2 min bakken in een droge pan tot hij geurt.','Kokosmelk erbij, 10 min zachtjes koken.','Afmaken met vissaus/sojasaus en limoen.'],
+   tip:'Pasta éérst bakken — rauwe currypasta smaakt vlak.', combi:'Kip, witvis of kikkererwten + rijst.',
+   macros:{kcal:270, eiwit:3, khd:6, vet:28}},
+  {id:'saus-yoghurt', naam:'Yoghurt-knoflooksaus', cat:'saus', tijd:5, porties:3,
+   ingr:['200 g Griekse yoghurt','1 teen knoflook (geraspt)','citroensap','1 tl komijn','verse munt (optioneel)'],
+   stappen:['Alles mengen; 10 min laten staan zodat de knoflook doortrekt.'],
+   tip:'Koele tegenhanger van pittig en geroosterd.', combi:'Kipspiesjes, shoarma-kip, wraps, bowls.',
+   macros:{kcal:70, eiwit:6, khd:3, vet:3}},
+  {id:'saus-chimi', naam:'Chimichurri', cat:'saus', tijd:10, porties:4,
+   ingr:['flinke bos peterselie','2 tenen knoflook','3 el olijfolie','1 el rode wijnazijn','1 tl oregano','chilivlokken'],
+   stappen:['Alles fijnhakken en mengen (niet blenden — grof is beter).','30 min laten staan.'],
+   tip:'Dé saus bij biefstuk; ook goed over geroosterde groenten.', combi:'Biefstuk, burgers, ovengroenten.',
+   macros:{kcal:100, eiwit:0, khd:1, vet:11}},
+  /* ---- koolhydraten ---- */
+  {id:'kool-rijst', naam:'Luchtige rijst', cat:'kool', tijd:20, porties:2,
+   ingr:['150 g basmati- of pandanrijst','225 ml water','snuf zout'],
+   stappen:['Rijst afspoelen tot het water helder is.','Water + zout aan de kook, rijst erin, deksel erop, laagste vuur 12 min.','Vuur uit, 10 min laten nastomen — deksel niet optillen. Loskloppen met vork.'],
+   tip:'1 : 1,5 rijst-water en niet roeren tijdens het koken.', combi:'Alles.',
+   macros:{kcal:270, eiwit:5, khd:59, vet:1}},
+  {id:'kool-pasta', naam:'Pasta al dente', cat:'kool', tijd:12, porties:2,
+   ingr:['170 g pasta','ruim water','flinke hand zout'],
+   stappen:['Water als zeewater zouten; pasta 1 min korter koken dan de verpakking zegt.','Kop pastawater bewaren; pasta afgieten en meteen door de saus.'],
+   tip:'Pasta gaart af ín de saus — daarom die minuut korter.', combi:'Elke saus hierboven.',
+   macros:{kcal:340, eiwit:12, khd:66, vet:2}},
+  {id:'kool-puree', naam:'Aardappelpuree', cat:'kool', tijd:25, porties:2,
+   ingr:['600 g kruimige aardappelen','scheut warme melk','klont boter','nootmuskaat'],
+   stappen:['Aardappelen in gelijke stukken 15–20 min koken; goed laten uitdampen.','Fijnstampen met warme melk en boter; nootmuskaat, zout.'],
+   tip:'Warme melk = smeuïg; koude melk = plakkerig.', combi:'Stoofvlees, gehaktballen, witvis.',
+   macros:{kcal:350, eiwit:6, khd:62, vet:9}},
+  {id:'kool-oven', naam:'Geroosterde aardappelen', cat:'kool', tijd:45, porties:2,
+   ingr:['600 g vastkokende aardappelen in parten','2 el olie','rozemarijn of BBQ-rub','zout'],
+   stappen:['Oven 200°C. Parten 5 min voorkoken en goed laten uitdampen.','Husselen met olie en kruiden; 35 min roosteren, halverwege keren.'],
+   tip:'Voorkoken + uitdampen = krokante rand.', combi:'Biefstuk + chimichurri, of kip uit de oven.',
+   macros:{kcal:380, eiwit:5, khd:60, vet:12}},
+  {id:'kool-noedels', naam:'Noedels', cat:'kool', tijd:8, porties:2,
+   ingr:['170 g mie of udon','scheutje sesamolie (optioneel)'],
+   stappen:['Koken volgens verpakking, afgieten, afspoelen met koud water tegen plakken.','Vlak voor serveren door het gerecht of de saus scheppen.'],
+   tip:'Afspoelen stopt het garen en voorkomt één grote noedelklont.', combi:'Teriyaki of saté + kip/tofu.',
+   macros:{kcal:320, eiwit:10, khd:58, vet:5}},
+  /* ---- groenten ---- */
+  {id:'groente-oven', naam:'Geroosterde groenten', cat:'groente', tijd:30, porties:2,
+   ingr:['600 g groente (paprika, courgette, broccoli, ui)','2 el olie','kruidenmix naar keuze'],
+   stappen:['Oven 200°C. Groente in gelijke stukken.','Husselen met olie, zout en kruiden; in één laag op de bakplaat.','25 min roosteren tot de randen kleuren.'],
+   tip:'Eén laag, niet stapelen — anders stoomt het in plaats van roostert.', combi:'Bij alles; restjes door salades.',
+   macros:{kcal:190, eiwit:3, khd:12, vet:13}},
+  {id:'groente-wok', naam:'Roerbakgroenten', cat:'groente', tijd:10, porties:2,
+   ingr:['500 g roerbakgroente of zelf gesneden','1 el olie','2 el sojasaus','teen knoflook, gember'],
+   stappen:['Wok gloeiend heet; olie, knoflook en gember 30 sec.','Groente erin, hoog vuur, 4–5 min omscheppen — moet blijven sissen.','Sojasaus erbij, meteen serveren.'],
+   tip:'Kleine porties wokken; te volle pan = slappe groente.', combi:'Noedels + teriyaki-kip of tofu.',
+   macros:{kcal:130, eiwit:4, khd:9, vet:7}},
+  {id:'groente-salade', naam:'Basissalade met dressing', cat:'groente', tijd:8, porties:2,
+   ingr:['zak sla of rucola','tomaat, komkommer','dressing: 3 el olie, 1 el azijn, 1 tl honing, 1 tl mosterd'],
+   stappen:['Dressing schudden in een potje.','Vlak voor het eten over de salade — anders wordt hij slap.'],
+   tip:'Verhouding 3:1 olie:zuur werkt altijd; mosterd bindt.', combi:'Naast elke maaltijd; + tonijn of kip = lunch.',
+   macros:{kcal:200, eiwit:1, khd:5, vet:19}},
+  /* ---- kruidenmixen (batch-prep) ---- */
+  {id:'mix-italiaans', naam:'Italiaanse kruidenmix', cat:'mix', tijd:5, porties:9,
+   ingr:['2 el gedroogde oregano','2 el gedroogde basilicum','1 el tijm','1 el rozemarijn (fijngewreven)','1 el knoflookpoeder','1 el uienpoeder','1 tl chilivlokken'],
+   stappen:['Alles mengen en in een schoon, luchtdicht potje doen. Labelen met naam + datum.'],
+   tip:null, combi:'Tomatensauzen, kip, ovengroenten, gehaktballen.',
+   mixInfo:{batch:'± 9 el — genoeg voor ± 9 gerechten', houdbaar:'6 mnd op volle sterkte (luchtdicht, donker, droog); daarna zwakker maar niet bedorven', gebruik:'1 el per 500 g vlees of per pan saus'}, macros:null},
+  {id:'mix-cajun', naam:'Cajun-mix', cat:'mix', tijd:5, porties:9,
+   ingr:['2 el paprikapoeder','1 el gerookt paprikapoeder','1 el knoflookpoeder','1 el uienpoeder','1 el oregano','1 el tijm','1–2 tl cayennepeper (naar smaak)','1 tl zwarte peper'],
+   stappen:['Mengen, luchtdicht potje, labelen.'],
+   tip:null, combi:'Airfryer-kip, kikkererwten, ovenaardappelen, garnalen.',
+   mixInfo:{batch:'± 9 el', houdbaar:'6 mnd op volle sterkte (luchtdicht, donker)', gebruik:'1 el per 500 g; ½ el voor aardappelen'}, macros:null},
+  {id:'mix-taco', naam:'Taco-/Mexicaanse mix', cat:'mix', tijd:5, porties:9,
+   ingr:['2 el chilipoeder','2 el komijn','1 el paprikapoeder','1 el knoflookpoeder','1 el uienpoeder','1 el oregano','½ tl cayennepeper'],
+   stappen:['Mengen, luchtdicht potje, labelen.'],
+   tip:null, combi:'Rul gehakt, draadjeskip, bonen, fajita’s.',
+   mixInfo:{batch:'± 9 el', houdbaar:'6 mnd op volle sterkte (luchtdicht, donker)', gebruik:'1 el per 500 g gehakt + scheutje water'}, macros:null},
+  {id:'mix-shoarma', naam:'Shoarma-mix', cat:'mix', tijd:5, porties:9,
+   ingr:['2 el komijn','2 el paprikapoeder','1 el korianderpoeder','1 el knoflookpoeder','1 tl kaneel','1 tl kurkuma','1 tl zwarte peper','½ tl cayennepeper'],
+   stappen:['Mengen, luchtdicht potje, labelen.'],
+   tip:null, combi:'Kippendijen, kipspiesjes, kikkererwten; + yoghurt-knoflooksaus.',
+   mixInfo:{batch:'± 9 el', houdbaar:'6 mnd op volle sterkte (luchtdicht, donker)', gebruik:'1 el per 500 g kip, samen met scheut olie'}, macros:null},
+  {id:'mix-bbq', naam:'BBQ-rub', cat:'mix', tijd:5, porties:10,
+   ingr:['2 el bruine suiker','2 el paprikapoeder','1 el gerookt paprikapoeder','1 el knoflookpoeder','1 el uienpoeder','1 el zout','1 tl mosterdpoeder','1 tl zwarte peper'],
+   stappen:['Mengen, luchtdicht potje, labelen. Suiker klontert: even fijnwrijven voor gebruik.'],
+   tip:null, combi:'Kippendijen, pulled chicken, spareribs, ovenaardappelen.',
+   mixInfo:{batch:'± 10 el', houdbaar:'6 mnd (suiker trekt vocht — goed afsluiten!)', gebruik:'1–1½ el per 500 g, royaal inwrijven'}, macros:null},
+  {id:'mix-kerrie', naam:'Milde kerriemix', cat:'mix', tijd:5, porties:8,
+   ingr:['2 el kerriepoeder','1 el garam masala','1 el kurkuma','1 el komijn','1 tl gemberpoeder'],
+   stappen:['Mengen, luchtdicht potje, labelen.'],
+   tip:null, combi:'Kip, linzen (dal!), kokos-currysaus, gebakken rijst.',
+   mixInfo:{batch:'± 8 el', houdbaar:'6 mnd op volle sterkte (luchtdicht, donker)', gebruik:'1 el per pan; eerst even meebakken voor meer smaak'}, macros:null},
+  {id:'mix-sate', naam:'Satékruiden', cat:'mix', tijd:5, porties:8,
+   ingr:['2 el korianderpoeder','1 el komijn','1 el knoflookpoeder','1 el gemberpoeder','1 el uienpoeder','1 tl kurkuma'],
+   stappen:['Mengen, luchtdicht potje, labelen.'],
+   tip:null, combi:'Kipspiesjes vooraf kruiden; ook door de satésaus zelf.',
+   mixInfo:{batch:'± 8 el', houdbaar:'6 mnd op volle sterkte (luchtdicht, donker)', gebruik:'1 el per 500 g kip + olie, 30 min intrekken'}, macros:null},
+];
+/* Vriezergerechten uit het 16-dagen-systeem: macro's per portie (saus; koolhydraat vers erbij) */
+const VRIEZER_MACROS = {
+  chili:{kcal:350, eiwit:28, khd:25, vet:14}, tikka:{kcal:380, eiwit:33, khd:12, vet:22},
+  bolognese:{kcal:320, eiwit:26, khd:12, vet:17}, thaicurry:{kcal:400, eiwit:30, khd:10, vet:26},
+  gehaktbal:{kcal:380, eiwit:26, khd:14, vet:23}, pulled:{kcal:300, eiwit:33, khd:18, vet:9},
+  dal:{kcal:320, eiwit:15, khd:40, vet:10}, goulash:{kcal:330, eiwit:34, khd:12, vet:14},
+  sate:{kcal:450, eiwit:36, khd:14, vet:27}, fajita:{kcal:300, eiwit:33, khd:12, vet:11},
+  kikker:{kcal:340, eiwit:12, khd:32, vet:18}, hachee:{kcal:340, eiwit:33, khd:14, vet:15},
+  teriyaki:{kcal:320, eiwit:34, khd:20, vet:9}, sincarne:{kcal:300, eiwit:15, khd:40, vet:8},
+  cacciatore:{kcal:330, eiwit:34, khd:10, vet:15}, pinda:{kcal:420, eiwit:25, khd:28, vet:23},
+};
+function alleRecepten(){
+  const vriezer = seedDishes().map(d => ({
+    id:'vz-'+d.id, naam:d.naam, cat:'vriezer', tijd:null, porties:1,
+    ingr:['Uit de vriezer — gekookt tijdens ronde '+d.ronde+' ('+RONDE_NAMEN[d.ronde]+')'],
+    stappen:['Ontdooien in koelkast of magnetron.','Door-en-door heet opwarmen (stomend, ≥75°C).','Serveren met vers gekookte '+d.serveerMet+'.'],
+    tip:null, combi:'Vers koolhydraat: '+d.serveerMet, macros:VRIEZER_MACROS[d.id] || null, veg:d.veg,
+  }));
+  return RECEPTEN.concat(vriezer, S.cookbook.custom);
+}
 /* ================= store ================= */
 const KEY = 'lifeos_v1';
-const SCHEMA_VERSION = 2;
-const COLLECTIONS = ['settings','freezer','grocery','training','study','tasks','money'];
+const SCHEMA_VERSION = 3;
+const COLLECTIONS = ['settings','freezer','grocery','training','study','tasks','money','cookbook','nutrition'];
 function defaults(){
   return {
     settings: {name:'', weekGoal:3, cycleDays:16, supabaseUrl:'', supabaseKey:'', gcalEmbedSrc:'', updated_at:''},
@@ -299,6 +561,8 @@ function defaults(){
     study: {vakken: [], items: [], sessions: [], updated_at:''},
     tasks: {list: [], updated_at:''},
     money: {monthly: [], business: {omzet:0, uitgaven:0}, updated_at:''},
+    cookbook: {custom: [], updated_at:''},
+    nutrition: {meals: [], weight: [], targets: {eiwitPerKg: 1.8, kcal: null}, updated_at:''},
   };
 }
 let S = load();
@@ -327,6 +591,11 @@ function migrate(st){
   if(!Array.isArray(st.tasks.list)) st.tasks.list = [];
   if(!Array.isArray(st.money.monthly)) st.money.monthly = [];
   if(!st.money.business || typeof st.money.business !== 'object') st.money.business = {omzet:0, uitgaven:0};
+  if(!Array.isArray(st.cookbook.custom)) st.cookbook.custom = [];
+  if(!Array.isArray(st.nutrition.meals)) st.nutrition.meals = [];
+  if(!Array.isArray(st.nutrition.weight)) st.nutrition.weight = [];
+  if(!st.nutrition.targets || typeof st.nutrition.targets !== 'object') st.nutrition.targets = {eiwitPerKg: 1.8, kcal: null};
+  if(!st.nutrition.targets.eiwitPerKg) st.nutrition.targets.eiwitPerKg = 1.8;
   st._v = SCHEMA_VERSION;
   return st;
 }
@@ -609,6 +878,7 @@ function renderVandaag(){
       <div class="tile"><div class="lbl">Porties in vriezer</div><div class="val">${totPorties}</div></div>
       <div class="tile ${kookDagen !== null && kookDagen <= 2 ? 'warn':''}"><div class="lbl">Volgende kookronde</div><div class="val">${kookDagen === null ? '—' : (kookDagen < 0 ? 'nu!' : kookDagen + '<small> dgn</small>')}</div></div>
       <div class="tile"><div class="lbl">Trainingen deze week</div><div class="val">${wk}<small>/${doel}</small></div></div>
+      <div class="tile"><div class="lbl">Eiwit vandaag</div><div class="val">${dagTotalen(todayISO()).eiwit}<small>${eiwitDoel() ? '/' + eiwitDoel() : ''} g</small></div></div>
       <div class="tile"><div class="lbl">Leeritems op 3× correct</div><div class="val">${geleerd}<small>/${S.study.items.length}</small></div></div>
       <div class="tile ${achterstallig.length ? 'warn':''}"><div class="lbl">Taken open</div><div class="val">${open.length}${achterstallig.length ? '<small> · '+achterstallig.length+' te laat</small>':''}</div></div>
     </div>
@@ -661,6 +931,66 @@ function modalPortie(){
   openModal(`<h3 id="modal-titel">Welke portie heb je gegeten?</h3>${rows}
     <div class="formrij"><button class="knop licht" style="flex:1" onclick="closeModal()">Sluiten</button></div>`);
 }
+/* ================= voeding: maaltijdlog, gewicht & doelen ================= */
+let etenView = 'kookboek';
+let kookFilter = 'alles';
+let kookZoek = '';
+let gegetenOffset = 0; /* 0 = vandaag, -1 = gisteren, … */
+function gegetenDatum(){ return addDays(todayISO(), gegetenOffset); }
+function mealsVoor(date){ return S.nutrition.meals.filter(m => m.date === date); }
+function dagTotalen(date){
+  return mealsVoor(date).reduce((t, m) => ({kcal:t.kcal + m.kcal, eiwit:t.eiwit + m.eiwit, khd:t.khd + m.khd, vet:t.vet + m.vet}), {kcal:0, eiwit:0, khd:0, vet:0});
+}
+function gewichtGesorteerd(){ return [...S.nutrition.weight].sort((a,b) => a.date.localeCompare(b.date)); }
+/* 7-daags voortschrijdend gemiddelde: dagelijkse wegingen schommelen 1-2%
+   (vocht/glycogeen); de trend is het echte signaal, niet de losse meting. */
+function gemiddeldeRond(datum){
+  const van = addDays(datum, -6);
+  const w = gewichtGesorteerd().filter(x => x.date >= van && x.date <= datum);
+  return w.length ? w.reduce((s,x) => s + x.kg, 0) / w.length : null;
+}
+function trendGewicht(){
+  const w = gewichtGesorteerd();
+  return w.length ? gemiddeldeRond(w[w.length-1].date) : null;
+}
+function trendPerWeek(){
+  const w = gewichtGesorteerd();
+  if(w.length < 4) return null;
+  const nu = gemiddeldeRond(w[w.length-1].date);
+  const weekTerug = gemiddeldeRond(addDays(w[w.length-1].date, -7));
+  return (nu != null && weekTerug != null) ? nu - weekTerug : null;
+}
+function eiwitDoel(){
+  const kg = trendGewicht();
+  return kg ? Math.round(kg * (S.nutrition.targets.eiwitPerKg || 1.8)) : null;
+}
+function logMaaltijd(naam, recipeId, porties, m, datum){
+  S.nutrition.meals.push({
+    id: uid(), date: datum || gegetenDatum(), naam, recipeId: recipeId || null, porties,
+    kcal: Math.round(m.kcal * porties), eiwit: Math.round(m.eiwit * porties),
+    khd: Math.round(m.khd * porties), vet: Math.round(m.vet * porties),
+  });
+  save('nutrition');
+}
+function delMaaltijd(id){
+  const m = S.nutrition.meals.find(x => x.id === id); if(!m) return;
+  S.nutrition.meals = S.nutrition.meals.filter(x => x.id !== id); save('nutrition');
+  toast('Maaltijd verwijderd', () => { S.nutrition.meals.push(m); save('nutrition'); });
+}
+function logGewicht(){
+  const el = $('#gewicht-kg');
+  const kg = Number(String(el.value).replace(',', '.'));
+  if(!kg || kg < 30 || kg > 250){
+    el.classList.add('ongeldig'); el.setAttribute('aria-invalid', 'true'); el.focus();
+    setTimeout(() => { el.classList.remove('ongeldig'); el.removeAttribute('aria-invalid'); }, 1800);
+    return;
+  }
+  const vandaag = todayISO();
+  const bestaand = S.nutrition.weight.find(w => w.date === vandaag);
+  if(bestaand) bestaand.kg = kg; else S.nutrition.weight.push({date: vandaag, kg});
+  save('nutrition');
+  toast('Gewicht gelogd: ' + kg.toLocaleString('nl-NL') + ' kg');
+}
 /* ================= Eten ================= */
 function dishStatus(d){
   if(d.porties === 0) return ['b-rood','koken'];
@@ -668,6 +998,173 @@ function dishStatus(d){
   return ['b-groen','op voorraad'];
 }
 function renderEten(){
+  const subs = [['kookboek','📖 Kookboek'],['gegeten','🍽 Gegeten'],['vriezer','🧊 Vriezer'],['bood','🛒 Boodschappen']];
+  const sub = '<div class="filterrij">' + subs.map(([k, n]) =>
+    `<button class="${etenView === k ? 'active':''}" onclick="etenView='${k}';renderEten()">${n}</button>`).join('') + '</div>';
+  let body;
+  if(etenView === 'kookboek') body = bouwKookboek();
+  else if(etenView === 'gegeten') body = bouwGegeten();
+  else if(etenView === 'bood') body = bouwBoodschappen();
+  else body = bouwVriezer();
+  $('#tab-eten').innerHTML = `<div class="datekop"><h1>Eten</h1><div class="sub">Kookboek · maaltijdlog · 16-dagen vriezersysteem</div></div>` + sub + body;
+}
+/* ---- kookboek ---- */
+function bouwKookboek(){
+  const cats = ['alles', ...Object.keys(CAT_NAMEN)];
+  const chips = '<div class="filterrij" style="margin-bottom:.6rem">' + cats.map(c =>
+    `<button class="${kookFilter === c ? 'active':''}" onclick="kookFilter='${c}';renderEten()">${c === 'alles' ? 'Alles' : CAT_NAMEN[c]}</button>`).join('') + '</div>';
+  const term = kookZoek.trim().toLowerCase();
+  let lijst = alleRecepten().filter(r => kookFilter === 'alles' || r.cat === kookFilter);
+  if(term) lijst = lijst.filter(r => (r.naam + ' ' + (r.ingr || []).join(' ') + ' ' + CAT_NAMEN[r.cat]).toLowerCase().includes(term));
+  const rows = lijst.map(r => {
+    const m = r.macros;
+    const info = m
+      ? `<span class="macro-regel"><b>${m.kcal} kcal</b> · ${m.eiwit}g eiwit · ${m.khd}g khd · ${m.vet}g vet p.p.</span>`
+      : (r.mixInfo ? esc(r.mixInfo.gebruik) : '');
+    return `<div class="rij">
+      <div class="groei" role="button" tabindex="0" style="cursor:pointer"
+        onclick="openRecept('${r.id}')" onkeydown="if(event.key==='Enter')openRecept('${r.id}')">
+        <div class="titel">${esc(r.naam)} <span class="badge b-grijs">${CAT_NAMEN[r.cat]}</span>${r.veg ? ' <span class="veg-tag">VEG</span>':''}${r.eigen ? ' <span class="badge b-terra">eigen</span>':''}</div>
+        <div class="sub">${r.tijd ? '⏱ ' + r.tijd + ' min · ' : ''}${info}</div>
+      </div>
+      ${m ? `<button class="knop klein terra" onclick="openRecept('${r.id}')" aria-label="bekijk en log ${esc(r.naam)}">🍽</button>` : ''}
+    </div>`;
+  }).join('') || '<div class="leeg">Niets gevonden.</div>';
+  return chips
+    + `<input id="kook-zoek" placeholder="Zoek op gerecht of ingrediënt…" value="${esc(kookZoek)}" oninput="kookZoek=this.value;renderAll()" style="width:100%;margin-bottom:.6rem" aria-label="zoeken in kookboek">`
+    + `<div class="card">${rows}</div>`
+    + `<details class="card soft" data-key="eigen-recept"><summary>Eigen recept toevoegen</summary>
+      <input id="er-naam" placeholder="Naam van het gerecht" style="width:100%;margin-top:.5rem">
+      <div class="formrij">
+        <select id="er-cat">${Object.keys(CAT_NAMEN).filter(c => c !== 'vriezer').map(c => `<option value="${c}">${CAT_NAMEN[c]}</option>`).join('')}</select>
+        <input id="er-tijd" type="number" min="1" placeholder="min." style="width:90px">
+        <input id="er-porties" type="number" min="1" value="2" style="width:90px" aria-label="porties">
+      </div>
+      <div class="formrij">
+        <input id="er-kcal" type="number" min="0" placeholder="kcal p.p.">
+        <input id="er-eiwit" type="number" min="0" placeholder="eiwit g">
+        <input id="er-khd" type="number" min="0" placeholder="khd g">
+        <input id="er-vet" type="number" min="0" placeholder="vet g">
+      </div>
+      <textarea id="er-ingr" placeholder="Ingrediënten — één per regel" rows="3" style="width:100%;margin-top:.5rem"></textarea>
+      <textarea id="er-stappen" placeholder="Stappen — één per regel" rows="3" style="width:100%;margin-top:.5rem"></textarea>
+      <div class="formrij"><button class="knop" onclick="addEigenRecept()">+ recept opslaan</button></div>
+    </details>`;
+}
+function openRecept(id){
+  const r = alleRecepten().find(x => x.id === id); if(!r) return;
+  const m = r.macros;
+  openModal(`<h3 id="modal-titel">${esc(r.naam)}</h3>
+    <div class="macro-regel" style="margin-bottom:.5rem">${r.tijd ? '⏱ ' + r.tijd + ' min · ' : ''}${r.porties ? r.porties + ' porties' : ''} · ${CAT_NAMEN[r.cat]}</div>
+    ${m ? `<div class="card soft" style="margin:0 0 .7rem;padding:.6rem .8rem"><div class="macro-regel"><b>${m.kcal} kcal</b> · <b>${m.eiwit} g</b> eiwit · ${m.khd} g koolhydraten · ${m.vet} g vet — per portie</div></div>` : ''}
+    ${r.mixInfo ? `<div class="card soft" style="margin:0 0 .7rem;padding:.6rem .8rem;font-size:.85rem"><strong>Batch:</strong> ${esc(r.mixInfo.batch)}<br><strong>Houdbaar:</strong> ${esc(r.mixInfo.houdbaar)}<br><strong>Dosering:</strong> ${esc(r.mixInfo.gebruik)}</div>` : ''}
+    <strong>Ingrediënten</strong>
+    <ul style="padding-left:1.2rem;font-size:.9rem;margin:.3rem 0 .7rem">${r.ingr.map(i => '<li>' + esc(i) + '</li>').join('')}</ul>
+    <strong>Bereiding</strong>
+    <ol style="padding-left:1.2rem;font-size:.9rem;margin:.3rem 0 .7rem">${r.stappen.map(s => '<li>' + esc(s) + '</li>').join('')}</ol>
+    ${r.tip ? `<div class="hint">💡 ${esc(r.tip)}</div>` : ''}
+    ${r.combi ? `<div class="hint">🔀 Combineer met: ${esc(r.combi)}</div>` : ''}
+    <div class="formrij">
+      ${m ? `<input type="number" id="log-porties" value="1" min="0.5" step="0.5" style="width:80px" aria-label="aantal porties"><button class="knop terra" onclick="eetRecept('${r.id}')">🍽 Gegeten</button>` : ''}
+      ${r.eigen ? `<button class="knop gevaar" onclick="delEigenRecept('${r.id}')">Verwijder</button>` : ''}
+      <button class="knop licht" onclick="closeModal()">Sluiten</button>
+    </div>`);
+}
+function eetRecept(id){
+  const r = alleRecepten().find(x => x.id === id); if(!r || !r.macros) return;
+  const p = Number($('#log-porties') && $('#log-porties').value) || 1;
+  logMaaltijd(r.naam, r.id, p, r.macros);
+  closeModal();
+  toast(r.naam + ' gelogd (' + p + ' portie' + (p === 1 ? '' : 's') + ') ✓');
+}
+function addEigenRecept(){
+  const naam = eis('#er-naam'); if(!naam) return;
+  const heeftMacros = $('#er-kcal').value !== '';
+  S.cookbook.custom.push({
+    id: 'eigen-' + uid(), eigen: true, naam,
+    cat: $('#er-cat').value, tijd: Number($('#er-tijd').value) || null, porties: Number($('#er-porties').value) || 1,
+    ingr: $('#er-ingr').value.split('\n').map(s => s.trim()).filter(Boolean),
+    stappen: $('#er-stappen').value.split('\n').map(s => s.trim()).filter(Boolean),
+    macros: heeftMacros ? {kcal: +$('#er-kcal').value || 0, eiwit: +$('#er-eiwit').value || 0, khd: +$('#er-khd').value || 0, vet: +$('#er-vet').value || 0} : null,
+  });
+  save('cookbook');
+  toast('Recept toegevoegd ✓');
+}
+function delEigenRecept(id){
+  const r = S.cookbook.custom.find(x => x.id === id); if(!r) return;
+  S.cookbook.custom = S.cookbook.custom.filter(x => x.id !== id);
+  closeModal(); save('cookbook');
+  toast('Recept verwijderd', () => { S.cookbook.custom.push(r); save('cookbook'); });
+}
+/* ---- maaltijdlog ---- */
+function bouwGegeten(){
+  const datum = gegetenDatum();
+  const t = dagTotalen(datum);
+  const eDoel = eiwitDoel();
+  const kDoel = S.nutrition.targets.kcal;
+  const bar = (val, doel) => {
+    const pct = Math.min(100, Math.round(val / doel * 100));
+    return `<div class="bar"><span class="${val > doel * 1.15 ? 'over':''}" style="width:${pct}%"></span></div>`;
+  };
+  const maaltijden = mealsVoor(datum).map(m => `<div class="rij">
+    <div class="groei"><div class="titel">${esc(m.naam)}${m.porties !== 1 ? ' <span class="badge b-grijs">' + m.porties + '×</span>' : ''}</div>
+    <div class="sub">${m.kcal} kcal · ${m.eiwit} g eiwit · ${m.khd} g khd · ${m.vet} g vet</div></div>
+    <button class="del" onclick="delMaaltijd('${m.id}')" aria-label="verwijderen">×</button>
+  </div>`).join('') || '<div class="leeg">Nog niets gelogd — tik 🍽 bij een recept in het kookboek, of log hieronder handmatig.</div>';
+  return `
+    <div class="card soft">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <button class="iconbtn mini" onclick="gegetenOffset--;renderEten()" aria-label="vorige dag">‹</button>
+        <h2 style="margin:0">${gegetenOffset === 0 ? 'Vandaag' : fmtDate(datum)}</h2>
+        <button class="iconbtn mini" onclick="if(gegetenOffset<0){gegetenOffset++;renderEten()}" aria-label="volgende dag" ${gegetenOffset === 0 ? 'disabled style="opacity:.4"' : ''}>›</button>
+      </div>
+      <div style="margin-top:.7rem">
+        <div style="display:flex;justify-content:space-between;font-size:.85rem"><span><strong>Eiwit</strong> ${t.eiwit}${eDoel ? ' / ' + eDoel : ''} g</span>${eDoel ? `<span>${Math.round(t.eiwit / eDoel * 100)}%</span>` : ''}</div>
+        ${eDoel ? bar(t.eiwit, eDoel) : '<div class="hint">Log je gewicht op de Sport-tab voor een persoonlijk eiwitdoel (1,8 g per kg).</div>'}
+        <div style="display:flex;justify-content:space-between;font-size:.85rem;margin-top:.5rem"><span><strong>Calorieën</strong> ${t.kcal}${kDoel ? ' / ' + kDoel : ''} kcal</span>${kDoel ? `<span>${Math.round(t.kcal / kDoel * 100)}%</span>` : ''}</div>
+        ${kDoel ? bar(t.kcal, kDoel) : '<div class="hint">Stel een caloriedoel in op de Sport-tab.</div>'}
+        <div class="macro-regel" style="margin-top:.5rem">Koolhydraten ${t.khd} g · Vet ${t.vet} g</div>
+      </div>
+    </div>
+    <div class="card"><h2>Maaltijden</h2>${maaltijden}
+      <div class="formrij"><button class="knop" onclick="etenView='kookboek';renderEten()">+ uit kookboek</button></div>
+    </div>
+    <div class="card"><h2>Handmatig loggen</h2>
+      <input id="hm-naam" placeholder="Wat heb je gegeten?" style="width:100%">
+      <div class="formrij">
+        <input id="hm-kcal" type="number" min="0" placeholder="kcal" aria-label="kcal">
+        <input id="hm-eiwit" type="number" min="0" placeholder="eiwit (g)" aria-label="eiwit">
+        <input id="hm-khd" type="number" min="0" placeholder="khd (g)" aria-label="koolhydraten">
+        <input id="hm-vet" type="number" min="0" placeholder="vet (g)" aria-label="vet">
+      </div>
+      <div class="formrij"><button class="knop" onclick="logHandmatig()">+ log</button></div>
+    </div>`;
+}
+function logHandmatig(){
+  const naam = eis('#hm-naam'); if(!naam) return;
+  logMaaltijd(naam, null, 1, {kcal: +$('#hm-kcal').value || 0, eiwit: +$('#hm-eiwit').value || 0, khd: +$('#hm-khd').value || 0, vet: +$('#hm-vet').value || 0});
+  toast('Gelogd ✓');
+}
+/* ---- boodschappen ---- */
+function lijstDetails(key, naam){
+  const l = S.grocery.lists[key];
+  const done = l.filter(x => x.checked).length;
+  return `<details class="card" data-key="lijst-${key}" ${key === 'r' + S.freezer.nextRound ? 'open':''}><summary>${naam} <span class="badge b-grijs">${done}/${l.length}</span></summary>
+    ${l.map((x, i) => `<div class="rij ${x.checked ? 'klaar':''}">
+      <input type="checkbox" class="chk" ${x.checked ? 'checked':''} onchange="toggleGrocery('${key}',${i})">
+      <div class="groei titel">${esc(x.item)}</div></div>`).join('')}
+    <div class="formrij"><button class="knop klein licht" onclick="resetGrocery('${key}')">Lijst resetten</button></div>
+  </details>`;
+}
+function bouwBoodschappen(){
+  return lijstDetails('staples', 'Basisvoorraad')
+    + lijstDetails('r1', 'Ronde 1 vers — The Basics')
+    + lijstDetails('r2', 'Ronde 2 vers — Comfort')
+    + lijstDetails('r3', 'Ronde 3 vers — World Kitchen')
+    + lijstDetails('r4', 'Ronde 4 vers — Fast & Fresh');
+}
+/* ---- vriezer (16-dagen-systeem) ---- */
+function bouwVriezer(){
   const kook = volgendeKookdatum();
   let inv = '';
   for(const r of [1,2,3,4]){
@@ -686,19 +1183,8 @@ function renderEten(){
       </div>`;
     }
   }
-  const lijstDetails = (key, naam) => {
-    const l = S.grocery.lists[key];
-    const done = l.filter(x => x.checked).length;
-    return `<details class="card" data-key="lijst-${key}" ${key==='r'+S.freezer.nextRound ? 'open':''}><summary>${naam} <span class="badge b-grijs">${done}/${l.length}</span></summary>
-      ${l.map((x,i) => `<div class="rij ${x.checked?'klaar':''}">
-        <input type="checkbox" class="chk" ${x.checked?'checked':''} onchange="toggleGrocery('${key}',${i})">
-        <div class="groei titel">${esc(x.item)}</div></div>`).join('')}
-      <div class="formrij"><button class="knop klein licht" onclick="resetGrocery('${key}')">Lijst resetten</button></div>
-    </details>`;
-  };
   const kd = S.freezer.cookdayChecked;
-  $('#tab-eten').innerHTML = `
-    <div class="datekop"><h1>Eten</h1><div class="sub">Het 16-dagen meal-prep-systeem · 4 rondes × 4 gerechten</div></div>
+  return `
     <div class="card soft">
       <h2>Rotatie</h2>
       <div class="formrij" style="align-items:center">
@@ -713,12 +1199,6 @@ function renderEten(){
       <div class="formrij"><button class="knop terra" onclick="rondeGekookt()">Ronde ${S.freezer.nextRound} gekookt ✓ (alle 4 op 4 porties)</button></div>
     </div>
     <div class="card"><h2>Vriezerinventaris</h2>${inv}</div>
-    <h2 style="margin:.4rem 0 .6rem">Boodschappen</h2>
-    ${lijstDetails('staples','Basisvoorraad')}
-    ${lijstDetails('r1','Ronde 1 vers — The Basics')}
-    ${lijstDetails('r2','Ronde 2 vers — Comfort')}
-    ${lijstDetails('r3','Ronde 3 vers — World Kitchen')}
-    ${lijstDetails('r4','Ronde 4 vers — Fast & Fresh')}
     <details class="card" data-key="kookdag"><summary>Kookdag-draaiboek (± 2¾ uur) <span class="badge b-grijs">${kd.filter(Boolean).length}/8</span></summary>
       ${KOOKDAG_STAPPEN.map(([tijd, stap], i) => `<div class="rij ${kd[i]?'klaar':''}">
         <input type="checkbox" class="chk" ${kd[i]?'checked':''} onchange="toggleKookdag(${i})">
@@ -748,7 +1228,10 @@ function portiesPlus(id, n){
 function portieGegeten(id){
   const d = S.freezer.dishes.find(x => x.id === id); if(!d || d.porties < 1) return;
   d.porties -= 1; d.lastEaten = todayISO();
+  const m = VRIEZER_MACROS[id];
+  if(m) logMaaltijd(d.naam, 'vz-' + id, 1, m, todayISO()); /* vriezerportie telt mee in het maaltijdlog */
   save('freezer');
+  toast('Portie ' + d.naam + ' gegeten' + (m ? ' & gelogd (' + m.eiwit + ' g eiwit)' : '') + ' ✓');
 }
 function setKookdatum(v){ S.freezer.lastCookDate = v || null; save('freezer'); }
 function setCyclus(v){ S.settings.cycleDays = Math.max(7, Math.min(31, Number(v)||16)); save('settings'); }
@@ -765,6 +1248,40 @@ function resetGrocery(key){ for(const x of S.grocery.lists[key]) x.checked = fal
 function toggleKookdag(i){ S.freezer.cookdayChecked[i] = !S.freezer.cookdayChecked[i]; save('freezer'); }
 function resetKookdag(){ S.freezer.cookdayChecked = [false,false,false,false,false,false,false,false]; save('freezer'); }
 /* ================= Sport ================= */
+function gewichtChart(){
+  const w = gewichtGesorteerd().slice(-30);
+  if(w.length < 2) return '';
+  const avgs = w.map(x => gemiddeldeRond(x.date));
+  const alles = w.map(x => x.kg).concat(avgs);
+  const min = Math.min(...alles) - 0.5, max = Math.max(...alles) + 0.5;
+  const X = i => 8 + i * (270 / (w.length - 1));
+  const Y = v => 76 - (v - min) / (max - min) * 66;
+  const punten = w.map((x, i) => `<circle cx="${X(i).toFixed(1)}" cy="${Y(x.kg).toFixed(1)}" r="2.5" fill="#c9c2b6"><title>${fmtDate(x.date)}: ${x.kg} kg</title></circle>`).join('');
+  const lijn = avgs.map((v, i) => (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(v).toFixed(1)).join(' ');
+  return `<svg width="300" height="85" viewBox="0 0 300 85" role="img" aria-label="gewichtstrend (stippen = wegingen, lijn = 7-daags gemiddelde)" style="max-width:100%">
+    ${punten}<path d="${lijn}" fill="none" stroke="#2F5D50" stroke-width="2"/></svg>`;
+}
+function schatKcal(){
+  const kg = trendGewicht();
+  if(!kg){ toast('Log eerst je gewicht — dan kan ik rekenen.'); return; }
+  const lengte = Number($('#doel-lengte').value);
+  const leeftijd = Number($('#doel-leeftijd').value);
+  if(!lengte || lengte < 120 || lengte > 230){ $('#doel-lengte').classList.add('ongeldig'); setTimeout(() => $('#doel-lengte') && $('#doel-lengte').classList.remove('ongeldig'), 1800); return; }
+  if(!leeftijd || leeftijd < 10 || leeftijd > 100){ $('#doel-leeftijd').classList.add('ongeldig'); setTimeout(() => $('#doel-leeftijd') && $('#doel-leeftijd').classList.remove('ongeldig'), 1800); return; }
+  const t = S.nutrition.targets;
+  t.lengte = lengte; t.leeftijd = leeftijd;
+  t.doelType = $('#doel-type').value;
+  /* Mifflin-St Jeor (man) — door de Academy of Nutrition & Dietetics aanbevolen
+     RMR-formule; ×1,5 activiteit (3×/week training); lean bulk = +300 kcal
+     (~10-15% surplus, Iraki/Helms 2019). */
+  const rmr = 10 * kg + 6.25 * lengte - 5 * leeftijd + 5;
+  const tdee = rmr * 1.5;
+  t.kcal = Math.round((tdee + (t.doelType === 'bulk' ? 300 : 0)) / 10) * 10;
+  save('nutrition');
+  toast('Caloriedoel gezet: ' + t.kcal + ' kcal/dag');
+}
+function setEiwitPerKg(v){ S.nutrition.targets.eiwitPerKg = Number(v); save('nutrition'); }
+function setKcalDoel(v){ S.nutrition.targets.kcal = Number(v) || null; save('nutrition'); }
 function renderSport(){
   const doel = Number(S.settings.weekGoal) || 3;
   const wk = trainingenDezeWeek();
@@ -780,16 +1297,76 @@ function renderSport(){
       <text x="${(7-i)*34+14}" y="19" text-anchor="middle" font-size="12" fill="#fff" font-weight="600">${n}</text>`;
   }
   const log = [...S.training.log].sort((a,b) => b.date.localeCompare(a.date)).slice(0, 30);
+  /* voeding × training */
+  const t = S.nutrition.targets;
+  const kgTrend = trendGewicht();
+  const laatste = gewichtGesorteerd();
+  const laatsteW = laatste.length ? laatste[laatste.length-1] : null;
+  const eDoel = eiwitDoel();
+  const vandaagTot = dagTotalen(todayISO());
+  const dPw = trendPerWeek();
+  /* eiwit-dots: laatste 7 dagen doel gehaald? */
+  let dots = '';
+  for(let i = 6; i >= 0; i--){
+    const dag = addDays(todayISO(), -i);
+    const e = dagTotalen(dag).eiwit;
+    const raak = eDoel && e >= eDoel;
+    const letter = new Date(dag + 'T12:00:00').toLocaleDateString('nl-NL', {weekday:'narrow'});
+    dots += `<span class="dagdot ${e === 0 ? '' : raak ? 'raak' : 'mis'}" title="${fmtDate(dag)}: ${e} g eiwit">${letter}</span>`;
+  }
+  let trendTekst = '';
+  let waarschuwing = '';
+  if(dPw != null && kgTrend){
+    const richting = dPw > 0.05 ? '+' : '';
+    trendTekst = `Trend: <strong>${richting}${(dPw).toLocaleString('nl-NL', {maximumFractionDigits:2})} kg/week</strong> (7-daags gemiddelde: ${kgTrend.toLocaleString('nl-NL', {maximumFractionDigits:1})} kg)`;
+    const pctPerWeek = dPw / kgTrend * 100;
+    if(t.doelType === 'bulk' && pctPerWeek > 0.5) waarschuwing = '<span class="badge b-amber">sneller dan 0,5%/week — daarboven wordt het vooral vet (Iraki 2019)</span>';
+    else if(t.doelType === 'bulk' && dPw < -0.1) waarschuwing = '<span class="badge b-amber">je komt niet aan — verhoog je kcal-doel iets</span>';
+    else if(t.doelType === 'bulk' && dPw >= 0) waarschuwing = '<span class="badge b-groen">mooi tempo ✓</span>';
+  }
   $('#tab-sport').innerHTML = `
     <div class="datekop"><h1>Sport</h1><div class="sub">Klein doel dat je ook in een slechte week haalt — 3 is het nieuwe 6.</div></div>
     <div class="tiles">
       <div class="tile"><div class="lbl">Deze week</div><div class="val">${wk}<small>/${doel}</small></div></div>
+      <div class="tile"><div class="lbl">Eiwit vandaag</div><div class="val">${vandaagTot.eiwit}<small>${eDoel ? '/' + eDoel : ''} g</small></div></div>
+      <div class="tile"><div class="lbl">Gewicht (trend)</div><div class="val">${kgTrend ? kgTrend.toLocaleString('nl-NL', {maximumFractionDigits:1}) : '—'}<small> kg</small></div></div>
       <div class="tile"><div class="lbl">Weekdoel</div><div class="val">
-        <input type="number" min="1" max="14" value="${doel}" style="width:70px;font-size:1.1rem" onchange="setWeekdoel(this.value)"></div></div>
+        <input type="number" min="1" max="14" value="${doel}" style="width:70px;font-size:1.1rem" onchange="setWeekdoel(this.value)" aria-label="weekdoel trainingen"></div></div>
     </div>
     <div class="card soft"><h2>Laatste 8 weken</h2>
       <svg class="strip" width="266" height="28" viewBox="0 0 266 28" role="img" aria-label="consistentie per week">${strip}</svg>
       <div class="hint">groen = doel gehaald · amber = deels · grijs = niets · rechts = deze week</div>
+    </div>
+    <div class="card soft"><h2>Lukt het?</h2>
+      <div style="font-size:.88rem">Eiwitdoel gehaald, laatste 7 dagen:</div>
+      <div class="dagdots">${dots}</div>
+      ${eDoel ? '' : '<div class="hint">Log je gewicht hieronder, dan rekent de app je eiwitdoel uit.</div>'}
+      ${trendTekst ? `<p style="font-size:.88rem;margin-top:.6rem">${trendTekst} ${waarschuwing}</p>` : ''}
+    </div>
+    <div class="card"><h2>Gewicht</h2>
+      <div class="formrij">
+        <input id="gewicht-kg" type="number" step="0.1" min="30" max="250" placeholder="kg vanochtend${laatsteW ? ' (laatst: ' + laatsteW.kg + ')' : ''}" style="width:200px" aria-label="gewicht in kg">
+        <button class="knop" onclick="logGewicht()">+ weging</button>
+      </div>
+      ${gewichtChart()}
+      <div class="hint">Weeg dagelijks onder dezelfde omstandigheden: 's ochtends, nuchter, na de wc. Dagschommelingen van 1–2% zijn vocht en glycogeen — de groene lijn (7-daags gemiddelde) is het echte signaal, niet de losse stip.</div>
+    </div>
+    <div class="card"><h2>Doelen</h2>
+      <div class="formrij" style="align-items:flex-end">
+        <label style="font-size:.8rem">Eiwit per kg<br>
+          <select onchange="setEiwitPerKg(this.value)" aria-label="eiwit per kg lichaamsgewicht">
+            ${[1.6, 1.8, 2.0, 2.2].map(v => `<option value="${v}" ${Number(t.eiwitPerKg) === v ? 'selected':''}>${v.toLocaleString('nl-NL')} g/kg${v === 1.8 ? ' (aanbevolen)' : ''}</option>`).join('')}
+          </select></label>
+        <label style="font-size:.8rem">Caloriedoel<br>
+          <input type="number" min="0" step="10" value="${t.kcal || ''}" placeholder="bijv. 2800" style="width:110px" onchange="setKcalDoel(this.value)" aria-label="caloriedoel"></label>
+      </div>
+      <div class="formrij" style="align-items:flex-end;margin-top:.4rem">
+        <label style="font-size:.8rem">Lengte (cm)<br><input id="doel-lengte" type="number" min="120" max="230" value="${t.lengte || ''}" style="width:90px"></label>
+        <label style="font-size:.8rem">Leeftijd<br><input id="doel-leeftijd" type="number" min="10" max="100" value="${t.leeftijd || ''}" style="width:80px"></label>
+        <label style="font-size:.8rem">Doel<br><select id="doel-type"><option value="onderhoud" ${t.doelType !== 'bulk' ? 'selected':''}>Onderhoud</option><option value="bulk" ${t.doelType === 'bulk' ? 'selected':''}>Spiermassa (lean bulk)</option></select></label>
+        <button class="knop licht" onclick="schatKcal()">Schat mijn kcal</button>
+      </div>
+      <div class="hint">Eiwit: 1,6–2,2 g/kg is de evidence-based range (Morton 2018: plateau bij ~1,6; 1,8 = veilige default). Kcal-schatting: Mifflin-St Jeor × 1,5 activiteit; lean bulk = +300 kcal (~10–15% surplus). Richttempo aankomen: 0,25–0,5% lichaamsgewicht per week. Op je 17e: niet agressief cutten — onderhoud of een klein surplus.</div>
     </div>
     <div class="card"><h2>Training toevoegen</h2>
       <div class="formrij">
@@ -1289,7 +1866,8 @@ if(sbCfg()) syncPull();
 /* Vraag persistente opslag aan (best effort; beschermt tegen storage-eviction). */
 if(navigator.storage && navigator.storage.persist){ navigator.storage.persist().catch(() => {}); }
 /* voor tests & console */
-window.lifeos = {gapVoorDagen, addDays, daysBetween, daysUntil, isOverdue, weekStart, volgendeKookdatum, avondetenSuggestie, get store(){ return S; }};
+window.lifeos = {gapVoorDagen, addDays, daysBetween, daysUntil, isOverdue, weekStart, volgendeKookdatum, avondetenSuggestie,
+  dagTotalen, eiwitDoel, trendGewicht, trendPerWeek, gemiddeldeRond, alleRecepten, logMaaltijd, get store(){ return S; }};
 </script>
 </body>
 </html>
