@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="LIFE OS">
+<meta name="theme-color" content="#2F5D50">
+<title>LIFE OS</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232F5D50'/%3E%3Ctext x='32' y='42' font-size='30' text-anchor='middle' fill='%23FAF6F0' font-family='Georgia,serif' font-weight='bold'%3EL%3C/text%3E%3Ccircle cx='46' cy='18' r='6' fill='%23E07A5F'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%232F5D50'/%3E%3Ctext x='32' y='42' font-size='30' text-anchor='middle' fill='%23FAF6F0' font-family='Georgia,serif' font-weight='bold'%3EL%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Lora:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --groen:#2F5D50; --terra:#E07A5F; --creme:#FAF6F0; --lichtgroen:#EAF1EE;
+  --inkt:#26302D; --grijs:#6B7572;
+  --rood:#F8D7DA; --amber:#FFE8C9; --oke:#D9EAD3;
+  --rood-t:#8f3a42; --amber-t:#8a5a17; --oke-t:#3d6b34;
+  --radius:14px; --tabbar-h:64px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{font-size:16px}
+body{
+  font-family:'Poppins',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  background:var(--creme); color:var(--inkt); line-height:1.5;
+  padding-bottom:calc(var(--tabbar-h) + env(safe-area-inset-bottom,0px));
+}
+h1,h2,h3{font-family:'Lora',Georgia,serif;color:var(--groen)}
+h1{font-size:1.5rem} h2{font-size:1.15rem;margin-bottom:.6rem} h3{font-size:1rem}
+button{font-family:inherit;cursor:pointer;border:none;border-radius:10px;font-size:.9rem}
+input,select,textarea{
+  font-family:inherit;font-size:16px;padding:.55rem .7rem;border:1px solid #d8d2c8;
+  border-radius:10px;background:#fff;color:var(--inkt);max-width:100%;
+}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--groen);outline-offset:1px}
+.app{display:flex;min-height:100vh}
+/* ---------- sidebar (desktop) ---------- */
+.sidebar{display:none}
+@media(min-width:900px){
+  body{padding-bottom:0}
+  .sidebar{
+    display:flex;flex-direction:column;gap:.25rem;width:220px;flex-shrink:0;
+    background:var(--groen);color:#fff;padding:1.2rem .8rem;min-height:100vh;
+    position:sticky;top:0;height:100vh;
+  }
+  .sidebar .brand{font-family:'Lora',serif;font-size:1.35rem;color:#fff;padding:.3rem .6rem 1rem}
+  .sidebar .brand span{color:var(--terra)}
+  .side-btn{
+    display:flex;align-items:center;gap:.6rem;background:transparent;color:#e8efec;
+    padding:.65rem .7rem;text-align:left;font-size:.92rem;min-height:44px;width:100%;
+  }
+  .side-btn:hover{background:rgba(255,255,255,.08)}
+  .side-btn.active{background:rgba(255,255,255,.16);color:#fff;font-weight:600}
+  .tabbar{display:none!important}
+}
+main{flex:1;max-width:820px;margin:0 auto;padding:1rem;width:100%}
+@media(min-width:900px){main{padding:1.6rem 2rem}}
+/* ---------- bottom tab bar (mobiel) ---------- */
+.tabbar{
+  position:fixed;bottom:0;left:0;right:0;z-index:40;display:flex;
+  background:#fff;border-top:1px solid #e5dfd5;
+  padding-bottom:env(safe-area-inset-bottom,0px);height:calc(var(--tabbar-h) + env(safe-area-inset-bottom,0px));
+}
+.tab-btn{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  background:none;color:var(--grijs);font-size:.62rem;min-height:44px;padding:.35rem 0;border-radius:0;
+}
+.tab-btn .ico{font-size:1.25rem;line-height:1}
+.tab-btn.active{color:var(--groen);font-weight:600}
+/* ---------- meer-sheet ---------- */
+.sheet-backdrop{position:fixed;inset:0;background:rgba(38,48,45,.4);z-index:50;display:none}
+.sheet-backdrop.open{display:block}
+.sheet{
+  position:fixed;left:0;right:0;bottom:0;z-index:51;background:#fff;
+  border-radius:18px 18px 0 0;padding:1rem 1rem calc(1.2rem + env(safe-area-inset-bottom,0px));
+  transform:translateY(105%);transition:transform .2s ease;
+}
+.sheet.open{transform:translateY(0)}
+.sheet button{display:flex;align-items:center;gap:.7rem;width:100%;background:var(--lichtgroen);
+  color:var(--inkt);padding:.85rem 1rem;margin-top:.5rem;font-size:1rem;min-height:48px}
+/* ---------- kaarten & tegels ---------- */
+.tab{display:none}
+.tab.active{display:block;animation:fade .15s ease}
+@keyframes fade{from{opacity:.4}to{opacity:1}}
+.card{background:#fff;border-radius:var(--radius);padding:1rem;margin-bottom:1rem;box-shadow:0 1px 3px rgba(38,48,45,.06)}
+.card.soft{background:var(--lichtgroen);box-shadow:none}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.7rem;margin-bottom:1rem}
+.tile{background:#fff;border-radius:var(--radius);padding:.85rem .9rem;box-shadow:0 1px 3px rgba(38,48,45,.06)}
+.tile .lbl{font-size:.68rem;color:var(--grijs);text-transform:uppercase;letter-spacing:.04em}
+.tile .val{font-size:1.6rem;font-weight:700;color:var(--groen);font-family:'Lora',serif}
+.tile .val small{font-size:.9rem;color:var(--grijs);font-weight:400}
+.tile.warn .val{color:var(--rood-t)}
+.datekop{margin-bottom:1rem}
+.datekop .sub{color:var(--grijs);font-size:.85rem}
+/* ---------- badges / status ---------- */
+.badge{display:inline-block;font-size:.68rem;font-weight:600;padding:.15rem .55rem;border-radius:999px;vertical-align:middle}
+.b-rood{background:var(--rood);color:var(--rood-t)}
+.b-amber{background:var(--amber);color:var(--amber-t)}
+.b-groen{background:var(--oke);color:var(--oke-t)}
+.b-terra{background:var(--terra);color:#fff}
+.b-veg{background:var(--oke);color:var(--oke-t)}
+.b-grijs{background:#eee9e0;color:var(--grijs)}
+/* ---------- lijsten & rijen ---------- */
+.rij{display:flex;align-items:center;gap:.6rem;padding:.55rem 0;border-bottom:1px solid #f0ebe2}
+.rij:last-child{border-bottom:none}
+.rij .groei{flex:1;min-width:0}
+.rij .titel{font-weight:500}
+.rij .sub{font-size:.78rem;color:var(--grijs)}
+.rij.klaar .titel{text-decoration:line-through;color:var(--grijs);font-weight:400}
+.knop{background:var(--groen);color:#fff;padding:.6rem 1rem;font-weight:600;min-height:44px}
+.knop:hover{background:#254c41}
+.knop.terra{background:var(--terra)}
+.knop.terra:hover{background:#cc6a50}
+.knop.licht{background:var(--lichtgroen);color:var(--groen)}
+.knop.klein{padding:.35rem .7rem;min-height:36px;font-size:.8rem}
+.knop.gevaar{background:var(--rood);color:var(--rood-t)}
+.iconbtn{background:var(--lichtgroen);color:var(--groen);width:44px;height:44px;min-width:44px;
+  font-size:1.15rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.iconbtn.mini{width:38px;height:38px;min-width:38px}
+.del{background:none;color:#c9c2b6;font-size:1.1rem;width:40px;height:40px;min-width:40px}
+.del:hover{color:var(--rood-t)}
+.chk{width:22px;height:22px;min-width:22px;accent-color:var(--groen)}
+.formrij{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.7rem}
+.formrij input,.formrij select{flex:1;min-width:110px}
+.formrij input[type=date]{min-width:140px}
+details{border-radius:var(--radius)}
+details summary{cursor:pointer;font-weight:600;color:var(--groen);padding:.3rem 0;min-height:34px;list-style:none;display:flex;align-items:center;gap:.4rem}
+details summary::before{content:'▸';transition:transform .15s;color:var(--terra)}
+details[open] summary::before{transform:rotate(90deg)}
+.filterrij{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.8rem}
+.filterrij button{background:#fff;color:var(--grijs);padding:.45rem .85rem;min-height:40px;font-size:.82rem;border:1px solid #e5dfd5}
+.filterrij button.active{background:var(--groen);color:#fff;border-color:var(--groen);font-weight:600}
+.leeg{color:var(--grijs);font-size:.88rem;padding:.6rem 0;font-style:italic}
+.quickrij{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem}
+.sessie-dots{display:inline-flex;gap:3px;vertical-align:middle}
+.dot{width:12px;height:12px;border-radius:50%;background:#e8e2d8;display:inline-block}
+.dot.g{background:#7aa874}.dot.f{background:#d9838b}
+.statusdot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#b9b2a6;margin-right:.35rem}
+.statusdot.groen{background:#5c9a54}.statusdot.rood{background:#c05560}
+pre.sql{background:#26302D;color:#d7e3dd;padding:.9rem;border-radius:10px;font-size:.72rem;overflow-x:auto;white-space:pre;line-height:1.45}
+.hint{font-size:.78rem;color:var(--grijs);margin-top:.4rem}
+.veldlabel{font-size:.75rem;font-weight:600;color:var(--grijs);text-transform:uppercase;letter-spacing:.04em;display:block;margin:.7rem 0 .25rem}
+.agenda-frame{width:100%;height:70vh;border:none;border-radius:var(--radius);background:#fff}
+.modal-backdrop{position:fixed;inset:0;background:rgba(38,48,45,.45);z-index:60;display:none;align-items:flex-end;justify-content:center}
+@media(min-width:600px){.modal-backdrop{align-items:center}}
+.modal-backdrop.open{display:flex}
+.modal{background:#fff;border-radius:18px 18px 0 0;padding:1.2rem;width:100%;max-width:480px}
+@media(min-width:600px){.modal{border-radius:18px}}
+.modal h3{margin-bottom:.6rem}
+.veg-tag{color:var(--oke-t);font-weight:700;font-size:.7rem}
+.quiz-vraag{font-size:1.05rem;font-weight:600;margin:.6rem 0}
+.quiz-antwoord{background:var(--lichtgroen);border-radius:10px;padding:.8rem;margin:.6rem 0}
+.strip{display:flex;gap:5px;align-items:flex-end;margin-top:.5rem}
+.porties-groot{font-size:1.15rem;font-weight:700;min-width:2ch;text-align:center;font-family:'Lora',serif}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">LIFE<span>·</span>OS</div>
+  </aside>
+  <main>
+    <section class="tab" id="tab-vandaag"></section>
+    <section class="tab" id="tab-eten"></section>
+    <section class="tab" id="tab-sport"></section>
+    <section class="tab" id="tab-leren"></section>
+    <section class="tab" id="tab-taken"></section>
+    <section class="tab" id="tab-geld"></section>
+    <section class="tab" id="tab-agenda"></section>
+    <section class="tab" id="tab-instellingen"></section>
+  </main>
+</div>
+<nav class="tabbar" id="tabbar"></nav>
+<div class="sheet-backdrop" id="sheet-backdrop" onclick="closeSheet()"></div>
+<div class="sheet" id="sheet"></div>
+<div class="modal-backdrop" id="modal-backdrop" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal"></div>
+</div>
+<script>
+'use strict';
+/* ================= helpers ================= */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+function pad(n){ return String(n).padStart(2, '0'); }
+function isoOf(d){ return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()); }
+function todayISO(){ return isoOf(new Date()); }
+function addDays(iso, n){ const d = new Date(iso + 'T12:00:00'); d.setDate(d.getDate() + n); return isoOf(d); }
+function daysBetween(a, b){ return Math.round((new Date(b+'T12:00:00') - new Date(a+'T12:00:00')) / 86400000); }
+function daysUntil(iso){ return daysBetween(todayISO(), iso); }
+function fmtDate(iso){ if(!iso) return ''; return new Date(iso+'T12:00:00').toLocaleDateString('nl-NL', {weekday:'short', day:'numeric', month:'short'}); }
+function fmtDateLang(iso){ return new Date(iso+'T12:00:00').toLocaleDateString('nl-NL', {weekday:'long', day:'numeric', month:'long'}); }
+function gapVoorDagen(dagen){ return Math.max(1, Math.round(dagen * 0.15)); } /* 10-20%-regel (Cepeda), 15% */
+function weekStart(iso){ const d = new Date(iso+'T12:00:00'); const dow = (d.getDay()+6)%7; d.setDate(d.getDate()-dow); return isoOf(d); }
+function isOverdue(due, done){ return !!due && !done && due < todayISO(); }
+function euro(n){ return '€ ' + (Math.round(n*100)/100).toLocaleString('nl-NL', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+function gcalLink(titel, datumISO, van, tot, details){
+  const d = datumISO.replace(/-/g,'');
+  const dates = d + 'T' + van.replace(':','') + '00/' + d + 'T' + tot.replace(':','') + '00';
+  return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + encodeURIComponent(titel)
+    + '&dates=' + dates + '&details=' + encodeURIComponent(details || '');
+}
+/* ================= seed-data ================= */
+const RONDE_NAMEN = {1:'The Basics', 2:'Comfort', 3:'World Kitchen', 4:'Fast & Fresh'};
+function seedDishes(){
+  const mk = (id, naam, ronde, veg, serveerMet) => ({id, naam, ronde, veg, serveerMet, porties:0, lastEaten:null});
+  return [
+    mk('chili','Chili con carne',1,false,'rijst'),
+    mk('tikka','Kip tikka masala',1,false,'rijst'),
+    mk('bolognese','Bolognese',1,false,'pasta'),
+    mk('thaicurry','Thaise rode curry met kip',1,false,'rijst'),
+    mk('gehaktbal','Gehaktballetjes in tomatensaus',2,false,'pasta'),
+    mk('pulled','BBQ pulled chicken',2,false,'wraps'),
+    mk('dal','Rode linzen-dal',2,true,'rijst'),
+    mk('goulash','Hongaarse goulash',2,false,'puree'),
+    mk('sate','Kip-satéstoof',3,false,'rijst'),
+    mk('fajita','Mexicaanse fajita-kip',3,false,'wraps'),
+    mk('kikker','Kikkererwten-spinaziecurry',3,true,'rijst'),
+    mk('hachee','Hachee',3,false,'puree'),
+    mk('teriyaki','Teriyaki-kip',4,false,'noedels'),
+    mk('sincarne','Chili sin carne',4,true,'rijst'),
+    mk('cacciatore','Kip cacciatore',4,false,'pasta'),
+    mk('pinda','Pindastoof met zoete aardappel',4,true,'rijst'),
+  ];
+}
+function seedLijst(items){ return items.map(item => ({item, checked:false})); }
+function seedGrocery(){
+  return {
+    staples: seedLijst(['Tomatenblokjes (6+ blikken)','Passata','Tomatenpuree','Kidneybonen','Zwarte bonen','Kikkererwten (blik)','Linzen (blik)','Maïs','Kokosmelk (3+)','Rijst','Pasta','Rode linzen (droog)','Bloem','Maizena','Paneermeel','Noedels','Sojasaus','Ketjap manis','Sambal','Rode currypasta','Pindakaas','Ketchup','Honing','Azijn','Olie','Bouillonblokjes (3 soorten)','Paprikapoeder (gewoon + gerookt)','Komijn','Kerriepoeder','Garam masala','Kurkuma','Oregano','Italiaanse kruiden','Chilipoeder','Laurier','Kruidnagel','Diepvries spinazie','Diepvries sperziebonen','Diepvries broccoliroosjes']),
+    r1: seedLijst(['3 uien','1 bol knoflook','2 rode paprika’s','1 winterpeen','Bleekselderij (optioneel)','Gember','1 limoen','500 g rundergehakt','500 g half-om-half gehakt','1,1 kg kippendij','200 ml kookroom']),
+    r2: seedLijst(['5 uien','Knoflook','2 paprika’s','Gember','1 citroen','500 g half-om-half gehakt','600 g kippendij','600 g riblappen','1 ei']),
+    r3: seedLijst(['6 uien','Knoflook','2 paprika’s','Gember','1 limoen','1 citroen','1,2 kg kippendij/kipfilet','600 g hacheevlees','Ontbijtkoek (1 plak)','Gefruite uitjes']),
+    r4: seedLijst(['4 uien','Knoflook','2 rode paprika’s','250 g champignons','600 g zoete aardappel','Gember','1,2 kg kippendij']),
+  };
+}
+const KOOKDAG_STAPPEN = [
+  ['0:00','Sudderaar eerst: stoofvlees aanbraden, uien erbij, opzetten op laagste vuur'],
+  ['0:25','Al het snijwerk voor de andere 3 gerechten — per gerecht in bakjes'],
+  ['0:45','Gerecht 2 (langste pruttelaar) op het vuur'],
+  ['1:10','Gerecht 3 op; tussendoor roeren en alvast afwassen'],
+  ['1:45','Gerecht 4 (snelste) in de vrijgekomen pan'],
+  ['2:15','Alles afmaken en proeven'],
+  ['2:15–2:45','Portioneren in platte zakken, labelen (gerecht + datum), plat invriezen op een bakplaat'],
+  ['Volgende dag','Tegels rechtop zetten en voorraad in de app bijwerken'],
+];
+const TECHNIEKEN = ['Retrieval','Spaced review','Interleaved oefenen','Self-explanation','Dual coding','Herlezen (betrapt)'];
+const DOMEINEN = ['School','Werk','Business','Thuis'];
+/* ================= store ================= */
+const KEY = 'lifeos_v1';
+function defaults(){
+  return {
+    settings: {name:'', weekGoal:3, cycleDays:16, supabaseUrl:'', supabaseKey:'', gcalEmbedSrc:'', updated_at:''},
+    freezer: {dishes: seedDishes(), lastCookDate:null, nextRound:1, cookdayChecked:[false,false,false,false,false,false,false,false], updated_at:''},
+    grocery: {lists: seedGrocery(), updated_at:''},
+    training: {log: [], updated_at:''},
+    study: {vakken: [], items: [], sessions: [], updated_at:''},
+    tasks: {list: [], updated_at:''},
+    money: {monthly: [], business: {omzet:0, uitgaven:0}, updated_at:''},
+  };
+}
+let S = load();
+function load(){
+  const def = defaults();
+  try{
+    const raw = localStorage.getItem(KEY);
+    if(!raw) return def;
+    const st = JSON.parse(raw);
+    for(const k of Object.keys(def)){
+      if(!st[k]) st[k] = def[k];
+    }
+    if(!st.freezer.dishes || !st.freezer.dishes.length) st.freezer.dishes = seedDishes();
+    if(!st.freezer.cookdayChecked) st.freezer.cookdayChecked = def.freezer.cookdayChecked;
+    if(!st.grocery.lists) st.grocery.lists = seedGrocery();
+    for(const l of ['staples','r1','r2','r3','r4']) if(!st.grocery.lists[l] || !st.grocery.lists[l].length) st.grocery.lists[l] = seedGrocery()[l];
+    return st;
+  }catch(e){ return def; }
+}
+function persist(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+function save(coll){
+  S[coll].updated_at = new Date().toISOString();
+  persist();
+  syncPush(coll);
+  renderAll();
+}
+/* ================= supabase-sync (fetch, geen SDK) ================= */
+let syncStatus = {state:'lokaal', msg:''}; /* lokaal | gesynct | fout */
+function sbCfg(){
+  const u = (S.settings.supabaseUrl||'').trim().replace(/\/+$/,'');
+  const k = (S.settings.supabaseKey||'').trim();
+  return (u && k) ? {u, k} : null;
+}
+function sbHeaders(k){
+  return {'apikey':k, 'Authorization':'Bearer '+k, 'Content-Type':'application/json'};
+}
+function setSync(state, msg){
+  syncStatus = {state, msg: msg||''};
+  const dot = $('#sync-dot'); const txt = $('#sync-txt');
+  if(dot){ dot.className = 'statusdot ' + (state==='gesynct'?'groen':state==='fout'?'rood':''); }
+  if(txt){ txt.textContent = state==='gesynct' ? 'Gesynct met Supabase' : state==='fout' ? ('Sync-fout: '+msg) : 'Alleen lokaal opgeslagen'; }
+}
+function syncPush(coll){
+  const cfg = sbCfg(); if(!cfg) return;
+  fetch(cfg.u + '/rest/v1/lifeos', {
+    method:'POST',
+    headers: Object.assign(sbHeaders(cfg.k), {'Prefer':'resolution=merge-duplicates'}),
+    body: JSON.stringify({id:coll, data:S[coll], updated_at:S[coll].updated_at}),
+  }).then(r => { if(r.ok) setSync('gesynct'); else setSync('fout', 'HTTP '+r.status); })
+    .catch(e => setSync('fout', e.message));
+}
+async function syncPull(){
+  const cfg = sbCfg(); if(!cfg) return;
+  try{
+    const r = await fetch(cfg.u + '/rest/v1/lifeos?select=*', {headers: sbHeaders(cfg.k)});
+    if(!r.ok){ setSync('fout', 'HTTP '+r.status); return; }
+    const rows = await r.json();
+    let changed = false;
+    for(const row of rows){
+      if(S[row.id] !== undefined && row.data && row.updated_at){
+        const lokaal = S[row.id].updated_at || '';
+        if(row.updated_at > lokaal){ S[row.id] = row.data; S[row.id].updated_at = row.updated_at; changed = true; }
+      }
+    }
+    /* lokaal nieuwere collecties terugpushen */
+    for(const k of Object.keys(S)){
+      const srv = rows.find(x => x.id === k);
+      if(S[k].updated_at && (!srv || S[k].updated_at > (srv.updated_at||''))) syncPush(k);
+    }
+    if(changed){ persist(); renderAll(); }
+    setSync('gesynct');
+  }catch(e){ setSync('fout', e.message); }
+}
+async function testSupabase(){
+  const cfg = sbCfg();
+  const out = $('#sb-test-result');
+  if(!cfg){ out.innerHTML = '<span class="badge b-amber">Vul eerst URL en key in</span>'; return; }
+  out.textContent = 'Testen…';
+  try{
+    const r = await fetch(cfg.u + '/rest/v1/lifeos?select=id', {headers: sbHeaders(cfg.k)});
+    if(r.ok){ out.innerHTML = '<span class="badge b-groen">Verbinding OK ✓</span>'; syncPull(); }
+    else out.innerHTML = '<span class="badge b-rood">Fout: HTTP '+r.status+' (bestaat de tabel lifeos?)</span>';
+  }catch(e){ out.innerHTML = '<span class="badge b-rood">Fout: '+esc(e.message)+'</span>'; }
+}
+/* ================= navigatie ================= */
+const TABS = [
+  {id:'vandaag', naam:'Vandaag', ico:'☀️'},
+  {id:'eten', naam:'Eten', ico:'🍲'},
+  {id:'sport', naam:'Sport', ico:'🏋️'},
+  {id:'leren', naam:'Leren', ico:'🧠'},
+  {id:'taken', naam:'Taken', ico:'✅'},
+  {id:'geld', naam:'Geld', ico:'💶'},
+  {id:'agenda', naam:'Agenda', ico:'📅'},
+  {id:'instellingen', naam:'Instellingen', ico:'⚙️'},
+];
+const HOOFDTABS = ['vandaag','eten','sport','leren','taken'];
+let actieveTab = 'vandaag';
+function bouwNav(){
+  const side = $('#sidebar');
+  for(const t of TABS){
+    const b = document.createElement('button');
+    b.className = 'side-btn'; b.dataset.tab = t.id;
+    b.innerHTML = '<span>'+t.ico+'</span> '+t.naam;
+    b.onclick = () => showTab(t.id);
+    side.appendChild(b);
+  }
+  const bar = $('#tabbar');
+  for(const id of HOOFDTABS){
+    const t = TABS.find(x => x.id === id);
+    const b = document.createElement('button');
+    b.className = 'tab-btn'; b.dataset.tab = t.id;
+    b.innerHTML = '<span class="ico">'+t.ico+'</span>'+t.naam;
+    b.onclick = () => showTab(t.id);
+    bar.appendChild(b);
+  }
+  const meer = document.createElement('button');
+  meer.className = 'tab-btn'; meer.id = 'meer-btn';
+  meer.innerHTML = '<span class="ico">⋯</span>Meer';
+  meer.onclick = openSheet;
+  bar.appendChild(meer);
+  const sheet = $('#sheet');
+  sheet.innerHTML = '<h3>Meer</h3>';
+  for(const id of ['geld','agenda','instellingen']){
+    const t = TABS.find(x => x.id === id);
+    const b = document.createElement('button');
+    b.innerHTML = '<span>'+t.ico+'</span> '+t.naam;
+    b.onclick = () => { closeSheet(); showTab(t.id); };
+    sheet.appendChild(b);
+  }
+}
+function showTab(id){
+  actieveTab = id;
+  document.querySelectorAll('.tab').forEach(el => el.classList.toggle('active', el.id === 'tab-'+id));
+  document.querySelectorAll('.side-btn').forEach(el => el.classList.toggle('active', el.dataset.tab === id));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.toggle('active', el.dataset.tab === id));
+  const inMeer = ['geld','agenda','instellingen'].includes(id);
+  const mb = $('#meer-btn'); if(mb) mb.classList.toggle('active', inMeer);
+  window.scrollTo(0,0);
+}
+function openSheet(){ $('#sheet').classList.add('open'); $('#sheet-backdrop').classList.add('open'); }
+function closeSheet(){ $('#sheet').classList.remove('open'); $('#sheet-backdrop').classList.remove('open'); }
+/* ================= modal ================= */
+function openModal(html){ $('#modal').innerHTML = html; $('#modal-backdrop').classList.add('open'); }
+function closeModal(){ $('#modal-backdrop').classList.remove('open'); }
+/* ================= Vandaag ================= */
+function trainingenDezeWeek(){
+  const start = weekStart(todayISO());
+  return S.training.log.filter(t => t.done && t.date >= start && t.date <= todayISO()).length;
+}
+function avondetenSuggestie(){
+  const gisteren = addDays(todayISO(), -1);
+  const kandidaten = S.freezer.dishes.filter(d => d.porties > 0 && d.lastEaten !== gisteren && d.lastEaten !== todayISO());
+  if(!kandidaten.length) return null;
+  kandidaten.sort((a,b) => (a.lastEaten||'0000') < (b.lastEaten||'0000') ? -1 : 1);
+  return kandidaten[0];
+}
+function volgendeKookdatum(){
+  if(!S.freezer.lastCookDate) return null;
+  return addDays(S.freezer.lastCookDate, Number(S.settings.cycleDays) || 16);
+}
+function renderVandaag(){
+  const totPorties = S.freezer.dishes.reduce((s,d) => s + d.porties, 0);
+  const kook = volgendeKookdatum();
+  const kookDagen = kook ? daysUntil(kook) : null;
+  const wk = trainingenDezeWeek();
+  const doel = Number(S.settings.weekGoal) || 3;
+  const geleerd = S.study.items.filter(i => (i.sessies||[]).filter(x => x==='goed').length >= 3).length;
+  const open = S.tasks.list.filter(t => !t.done);
+  const achterstallig = open.filter(t => isOverdue(t.due, t.done));
+  const vandaagTaken = open.filter(t => t.due === todayISO());
+  const sug = avondetenSuggestie();
+  const trainingVandaag = S.training.log.find(t => t.date === todayISO() && !t.done);
+  const naam = S.settings.name ? ', ' + esc(S.settings.name) : '';
+  let lijst = '';
+  for(const t of [...achterstallig, ...vandaagTaken]){
+    lijst += `<div class="rij">
+      <input type="checkbox" class="chk" onchange="taakKlaar('${t.id}')">
+      <div class="groei"><div class="titel">${esc(t.titel)}</div>
+      <div class="sub"><span class="badge ${isOverdue(t.due,t.done)?'b-rood':'b-amber'}">${isOverdue(t.due,t.done)?'achterstallig · '+fmtDate(t.due):'vandaag'}</span> · ${esc(t.domein)}</div></div>
+    </div>`;
+  }
+  if(trainingVandaag){
+    lijst += `<div class="rij">
+      <input type="checkbox" class="chk" onchange="trainingKlaar('${trainingVandaag.id}')">
+      <div class="groei"><div class="titel">Training: ${esc(trainingVandaag.type)}</div>
+      <div class="sub">${esc(trainingVandaag.note||'gepland voor vandaag')}</div></div>
+    </div>`;
+  }
+  if(sug){
+    lijst += `<div class="rij">
+      <span style="font-size:1.3rem">🍲</span>
+      <div class="groei"><div class="titel">Avondeten: ${esc(sug.naam)}</div>
+      <div class="sub">langst niet gegeten · serveer met vers gekookte ${esc(sug.serveerMet)} · ${sug.porties} porties in de vriezer</div></div>
+      <button class="knop klein terra" onclick="portieGegeten('${sug.id}')">gegeten ✓</button>
+    </div>`;
+  } else {
+    lijst += `<div class="leeg">Geen vriezermaaltijd beschikbaar — tijd voor een kookronde 🍳</div>`;
+  }
+  if(!lijst) lijst = '<div class="leeg">Niets voor vandaag — lekker rustig.</div>';
+  $('#tab-vandaag').innerHTML = `
+    <div class="datekop"><h1>${fmtDateLang(todayISO())}</h1><div class="sub">Alles op één plek${naam}.</div></div>
+    <div class="tiles">
+      <div class="tile"><div class="lbl">Porties in vriezer</div><div class="val">${totPorties}</div></div>
+      <div class="tile ${kookDagen !== null && kookDagen <= 2 ? 'warn':''}"><div class="lbl">Volgende kookronde</div><div class="val">${kookDagen === null ? '—' : (kookDagen < 0 ? 'nu!' : kookDagen + '<small> dgn</small>')}</div></div>
+      <div class="tile"><div class="lbl">Trainingen deze week</div><div class="val">${wk}<small>/${doel}</small></div></div>
+      <div class="tile"><div class="lbl">Leeritems op 3× correct</div><div class="val">${geleerd}<small>/${S.study.items.length}</small></div></div>
+      <div class="tile ${achterstallig.length ? 'warn':''}"><div class="lbl">Taken open</div><div class="val">${open.length}${achterstallig.length ? '<small> · '+achterstallig.length+' te laat</small>':''}</div></div>
+    </div>
+    <div class="quickrij">
+      <button class="knop" onclick="modalTaak()">+ taak</button>
+      <button class="knop" onclick="modalTraining()">+ training</button>
+      <button class="knop licht" onclick="modalPortie()">🍲 portie gegeten</button>
+    </div>
+    <div class="card"><h2>Vandaag</h2>${lijst}</div>`;
+}
+/* quick-add modals */
+function modalTaak(){
+  openModal(`<h3>Nieuwe taak</h3>
+    <input id="m-titel" placeholder="Wat moet er gebeuren?" style="width:100%">
+    <div class="formrij">
+      <select id="m-domein">${DOMEINEN.map(d => '<option>'+d+'</option>').join('')}</select>
+      <input id="m-due" type="date">
+    </div>
+    <div class="formrij"><button class="knop" style="flex:1" onclick="quickTaak()">Toevoegen</button>
+    <button class="knop licht" onclick="closeModal()">Annuleer</button></div>`);
+  $('#m-titel').focus();
+}
+function quickTaak(){
+  const titel = $('#m-titel').value.trim(); if(!titel) return;
+  S.tasks.list.push({id:uid(), titel, domein:$('#m-domein').value, due:$('#m-due').value || '', done:false});
+  closeModal(); save('tasks');
+}
+function modalTraining(){
+  openModal(`<h3>Training loggen</h3>
+    <div class="formrij">
+      <input id="m-tdate" type="date" value="${todayISO()}">
+      <select id="m-ttype"><option>kracht</option><option>cardio</option><option>anders</option></select>
+    </div>
+    <input id="m-tnote" placeholder="Notitie (optioneel)" style="width:100%;margin-top:.5rem">
+    <label style="display:flex;align-items:center;gap:.5rem;margin-top:.7rem;font-size:.9rem">
+      <input type="checkbox" class="chk" id="m-tdone" checked> Gedaan (uitvinken = gepland)</label>
+    <div class="formrij"><button class="knop" style="flex:1" onclick="quickTraining()">Opslaan</button>
+    <button class="knop licht" onclick="closeModal()">Annuleer</button></div>`);
+}
+function quickTraining(){
+  S.training.log.push({id:uid(), date:$('#m-tdate').value || todayISO(), type:$('#m-ttype').value, note:$('#m-tnote').value.trim(), done:$('#m-tdone').checked});
+  closeModal(); save('training');
+}
+function modalPortie(){
+  const met = S.freezer.dishes.filter(d => d.porties > 0);
+  const rows = met.length ? met.map(d => `<div class="rij">
+      <div class="groei"><div class="titel">${esc(d.naam)}</div><div class="sub">${d.porties} porties</div></div>
+      <button class="knop klein terra" onclick="portieGegeten('${d.id}');closeModal()">gegeten ✓</button>
+    </div>`).join('') : '<div class="leeg">De vriezer is leeg.</div>';
+  openModal(`<h3>Welke portie heb je gegeten?</h3>${rows}
+    <div class="formrij"><button class="knop licht" style="flex:1" onclick="closeModal()">Sluiten</button></div>`);
+}
+/* ================= Eten ================= */
+function dishStatus(d){
+  if(d.porties === 0) return ['b-rood','koken'];
+  if(d.porties < 3) return ['b-amber','bijna op'];
+  return ['b-groen','op voorraad'];
+}
+function renderEten(){
+  const kook = volgendeKookdatum();
+  let inv = '';
+  for(const r of [1,2,3,4]){
+    inv += `<h3 style="margin-top:.9rem">Ronde ${r} — ${RONDE_NAMEN[r]}${S.freezer.nextRound === r ? ' <span class="badge b-terra">aan de beurt</span>':''}</h3>`;
+    for(const d of S.freezer.dishes.filter(x => x.ronde === r)){
+      const [cls, txt] = dishStatus(d);
+      inv += `<div class="rij">
+        <div class="groei">
+          <div class="titel">${esc(d.naam)} ${d.veg ? '<span class="veg-tag">VEG</span>':''}</div>
+          <div class="sub"><span class="badge ${cls}">${txt}</span> · met verse ${esc(d.serveerMet)}${d.lastEaten ? ' · laatst gegeten '+fmtDate(d.lastEaten):''}</div>
+        </div>
+        <button class="iconbtn mini" onclick="portiesPlus('${d.id}',-1)" aria-label="portie eraf">−</button>
+        <span class="porties-groot">${d.porties}</span>
+        <button class="iconbtn mini" onclick="portiesPlus('${d.id}',1)" aria-label="portie erbij">+</button>
+        <button class="knop klein licht" onclick="portieGegeten('${d.id}')" title="portie gegeten">🍽</button>
+      </div>`;
+    }
+  }
+  const lijstDetails = (key, naam) => {
+    const l = S.grocery.lists[key];
+    const done = l.filter(x => x.checked).length;
+    return `<details class="card" ${key==='r'+S.freezer.nextRound ? 'open':''}><summary>${naam} <span class="badge b-grijs">${done}/${l.length}</span></summary>
+      ${l.map((x,i) => `<div class="rij ${x.checked?'klaar':''}">
+        <input type="checkbox" class="chk" ${x.checked?'checked':''} onchange="toggleGrocery('${key}',${i})">
+        <div class="groei titel">${esc(x.item)}</div></div>`).join('')}
+      <div class="formrij"><button class="knop klein licht" onclick="resetGrocery('${key}')">Lijst resetten</button></div>
+    </details>`;
+  };
+  const kd = S.freezer.cookdayChecked;
+  $('#tab-eten').innerHTML = `
+    <div class="datekop"><h1>Eten</h1><div class="sub">Het 16-dagen meal-prep-systeem · 4 rondes × 4 gerechten</div></div>
+    <div class="card soft">
+      <h2>Rotatie</h2>
+      <div class="formrij" style="align-items:center">
+        <label style="font-size:.85rem">Laatste kookronde:
+          <input type="date" value="${S.freezer.lastCookDate || ''}" onchange="setKookdatum(this.value)"></label>
+        <label style="font-size:.85rem">Cyclus:
+          <input type="number" min="7" max="31" value="${Number(S.settings.cycleDays)||16}" style="width:70px" onchange="setCyclus(this.value)"> dagen</label>
+      </div>
+      <p style="margin-top:.6rem;font-size:.92rem">
+        ${kook ? `Volgende kookronde: <strong>${fmtDate(kook)}</strong> (${daysUntil(kook) < 0 ? '<span class="badge b-rood">over tijd</span>' : 'over '+daysUntil(kook)+' dagen'})` : 'Vul je laatste kookdatum in om de rotatie te starten.'}
+        · Aan de beurt: <strong>Ronde ${S.freezer.nextRound} — ${RONDE_NAMEN[S.freezer.nextRound]}</strong></p>
+      <div class="formrij"><button class="knop terra" onclick="rondeGekookt()">Ronde ${S.freezer.nextRound} gekookt ✓ (alle 4 op 4 porties)</button></div>
+    </div>
+    <div class="card"><h2>Vriezerinventaris</h2>${inv}</div>
+    <h2 style="margin:.4rem 0 .6rem">Boodschappen</h2>
+    ${lijstDetails('staples','Basisvoorraad')}
+    ${lijstDetails('r1','Ronde 1 vers — The Basics')}
+    ${lijstDetails('r2','Ronde 2 vers — Comfort')}
+    ${lijstDetails('r3','Ronde 3 vers — World Kitchen')}
+    ${lijstDetails('r4','Ronde 4 vers — Fast & Fresh')}
+    <details class="card"><summary>Kookdag-draaiboek (± 2¾ uur) <span class="badge b-grijs">${kd.filter(Boolean).length}/8</span></summary>
+      ${KOOKDAG_STAPPEN.map(([tijd, stap], i) => `<div class="rij ${kd[i]?'klaar':''}">
+        <input type="checkbox" class="chk" ${kd[i]?'checked':''} onchange="toggleKookdag(${i})">
+        <div class="groei"><div class="titel">${esc(stap)}</div><div class="sub">${tijd}</div></div></div>`).join('')}
+      <div class="formrij"><button class="knop klein licht" onclick="resetKookdag()">Draaiboek resetten</button>
+      <a class="knop klein" style="text-decoration:none;display:inline-flex;align-items:center" target="_blank" rel="noopener"
+        href="${gcalLink('Kookronde '+S.freezer.nextRound+' — '+RONDE_NAMEN[S.freezer.nextRound], kook || todayISO(), '14:00','16:30','LIFE OS kookdag: 4 gerechten, draaiboek in de app.')}">📅 Plan in agenda</a></div>
+    </details>
+    <details class="card soft"><summary>Regels (Voedingscentrum)</summary>
+      <ul style="padding-left:1.2rem;font-size:.88rem;margin-top:.5rem">
+        <li>Saus invriezen, koolhydraten (rijst/pasta/puree) altijd vers koken</li>
+        <li>Plat invriezen in diepvrieszakken — sneller bevroren, sneller ontdooid</li>
+        <li>Binnen 2 uur na koken de koeling of vriezer in · koelkast (4°C) max 2 dagen</li>
+        <li>Vriezer (−18°C): 3 maanden houdbaar (kokossauzen 2–3 mnd; schiften is cosmetisch — gladroeren)</li>
+        <li>Ontdooien in koelkast of magnetron, nooit op het aanrecht · ontdooid = binnen 24 uur opeten</li>
+        <li>Opwarmen door-en-door heet (≥75°C) · nooit opnieuw invriezen zonder eerst volledig te verhitten</li>
+        <li>Twijfel je? Weggooien.</li>
+      </ul>
+    </details>`;
+}
+function portiesPlus(id, n){
+  const d = S.freezer.dishes.find(x => x.id === id); if(!d) return;
+  d.porties = Math.max(0, d.porties + n);
+  save('freezer');
+}
+function portieGegeten(id){
+  const d = S.freezer.dishes.find(x => x.id === id); if(!d || d.porties < 1) return;
+  d.porties -= 1; d.lastEaten = todayISO();
+  save('freezer');
+}
+function setKookdatum(v){ S.freezer.lastCookDate = v || null; save('freezer'); }
+function setCyclus(v){ S.settings.cycleDays = Math.max(7, Math.min(31, Number(v)||16)); save('settings'); }
+function rondeGekookt(){
+  const r = S.freezer.nextRound;
+  for(const d of S.freezer.dishes) if(d.ronde === r) d.porties = 4;
+  S.freezer.lastCookDate = todayISO();
+  S.freezer.nextRound = r === 4 ? 1 : r + 1;
+  S.freezer.cookdayChecked = [false,false,false,false,false,false,false,false];
+  save('freezer');
+}
+function toggleGrocery(key, i){ S.grocery.lists[key][i].checked = !S.grocery.lists[key][i].checked; save('grocery'); }
+function resetGrocery(key){ for(const x of S.grocery.lists[key]) x.checked = false; save('grocery'); }
+function toggleKookdag(i){ S.freezer.cookdayChecked[i] = !S.freezer.cookdayChecked[i]; save('freezer'); }
+function resetKookdag(){ S.freezer.cookdayChecked = [false,false,false,false,false,false,false,false]; save('freezer'); }
+/* ================= Sport ================= */
+function renderSport(){
+  const doel = Number(S.settings.weekGoal) || 3;
+  const wk = trainingenDezeWeek();
+  /* 8-weken strip */
+  const start = weekStart(todayISO());
+  let strip = '';
+  for(let i = 7; i >= 0; i--){
+    const ws = addDays(start, -7*i);
+    const we = addDays(ws, 6);
+    const n = S.training.log.filter(t => t.done && t.date >= ws && t.date <= we).length;
+    const kleur = n >= doel ? '#7aa874' : n > 0 ? '#e8b970' : '#ddd6ca';
+    strip += `<rect x="${(7-i)*34}" y="0" width="28" height="28" rx="6" fill="${kleur}"><title>Week van ${fmtDate(ws)}: ${n}/${doel}</title></rect>
+      <text x="${(7-i)*34+14}" y="19" text-anchor="middle" font-size="12" fill="#fff" font-weight="600">${n}</text>`;
+  }
+  const log = [...S.training.log].sort((a,b) => b.date.localeCompare(a.date)).slice(0, 30);
+  $('#tab-sport').innerHTML = `
+    <div class="datekop"><h1>Sport</h1><div class="sub">Klein doel dat je ook in een slechte week haalt — 3 is het nieuwe 6.</div></div>
+    <div class="tiles">
+      <div class="tile"><div class="lbl">Deze week</div><div class="val">${wk}<small>/${doel}</small></div></div>
+      <div class="tile"><div class="lbl">Weekdoel</div><div class="val">
+        <input type="number" min="1" max="14" value="${doel}" style="width:70px;font-size:1.1rem" onchange="setWeekdoel(this.value)"></div></div>
+    </div>
+    <div class="card soft"><h2>Laatste 8 weken</h2>
+      <svg class="strip" width="266" height="28" viewBox="0 0 266 28" role="img" aria-label="consistentie per week">${strip}</svg>
+      <div class="hint">groen = doel gehaald · amber = deels · grijs = niets · rechts = deze week</div>
+    </div>
+    <div class="card"><h2>Training toevoegen</h2>
+      <div class="formrij">
+        <input type="date" id="tr-date" value="${todayISO()}">
+        <select id="tr-type"><option>kracht</option><option>cardio</option><option>anders</option></select>
+        <input id="tr-note" placeholder="Notitie (optioneel)">
+        <button class="knop" onclick="addTraining()">+ log</button>
+      </div>
+    </div>
+    <div class="card"><h2>Log</h2>
+      ${log.length ? log.map(t => `<div class="rij ${t.done?'':''}">
+        <input type="checkbox" class="chk" ${t.done?'checked':''} onchange="trainingKlaar('${t.id}')">
+        <div class="groei"><div class="titel">${esc(t.type)}${t.done?'':' <span class="badge b-amber">gepland</span>'}</div>
+        <div class="sub">${fmtDate(t.date)}${t.note ? ' · '+esc(t.note):''}</div></div>
+        <button class="del" onclick="delTraining('${t.id}')" aria-label="verwijderen">×</button>
+      </div>`).join('') : '<div class="leeg">Nog geen trainingen gelogd.</div>'}
+    </div>`;
+}
+function setWeekdoel(v){ S.settings.weekGoal = Math.max(1, Number(v)||3); save('settings'); }
+function addTraining(){
+  S.training.log.push({id:uid(), date:$('#tr-date').value || todayISO(), type:$('#tr-type').value, note:$('#tr-note').value.trim(), done:true});
+  save('training');
+}
+function trainingKlaar(id){ const t = S.training.log.find(x => x.id === id); if(t){ t.done = !t.done; save('training'); } }
+function delTraining(id){ S.training.log = S.training.log.filter(x => x.id !== id); save('training'); }
+/* ================= Leren ================= */
+let quiz = null; /* {queue:[ids], idx, toonAntwoord} */
+function vakGap(vakId){
+  const v = S.study.vakken.find(x => x.id === vakId);
+  if(v && v.examDate && daysUntil(v.examDate) > 0) return gapVoorDagen(daysUntil(v.examDate));
+  return 3; /* geen (toekomstige) tentamendatum: korte standaard-tussenpoos */
+}
+function goedCount(item){ return (item.sessies||[]).filter(s => s === 'goed').length; }
+function itemStatus(item){
+  if(!item.nextReview) return ['b-grijs','nog niet geoefend'];
+  const d = daysUntil(item.nextReview);
+  if(d < 0) return ['b-rood','achterstallig'];
+  if(d === 0) return ['b-amber','vandaag reviewen'];
+  return ['b-groen','review '+fmtDate(item.nextReview)];
+}
+function renderLeren(){
+  const vakOpties = S.study.vakken.map(v => `<option value="${v.id}">${esc(v.naam)}</option>`).join('');
+  /* vakken */
+  const vakkenHtml = S.study.vakken.length ? S.study.vakken.map(v => {
+    const d = v.examDate ? daysUntil(v.examDate) : null;
+    return `<div class="rij">
+      <div class="groei"><div class="titel">${esc(v.naam)}</div>
+        <div class="sub">${v.examDate ? (d >= 0 ? `tentamen ${fmtDate(v.examDate)} · over ${d} dgn · tussenpoos ${gapVoorDagen(Math.max(d,1))} dgn` : 'tentamen geweest') : 'geen tentamendatum'}</div></div>
+      <input type="date" value="${v.examDate||''}" onchange="setExamDate('${v.id}',this.value)" style="width:150px">
+      <button class="del" onclick="delVak('${v.id}')" aria-label="verwijderen">×</button>
+    </div>`;
+  }).join('') : '<div class="leeg">Voeg je vakken en tentamendata toe.</div>';
+  /* relearning items */
+  const items = [...S.study.items].sort((a,b) => {
+    const ra = a.nextReview || '9999', rb = b.nextReview || '9999';
+    return ra !== rb ? ra.localeCompare(rb) : goedCount(a) - goedCount(b);
+  });
+  const itemsHtml = items.length ? items.map(it => {
+    const vak = S.study.vakken.find(v => v.id === it.vak);
+    const [cls, txt] = itemStatus(it);
+    const dots = Array.from({length:6}, (_,i) => {
+      const s = (it.sessies||[])[i];
+      return `<span class="dot ${s === 'goed' ? 'g' : s === 'fout' ? 'f' : ''}"></span>`;
+    }).join('');
+    return `<div class="rij">
+      <div class="groei"><div class="titel">${esc(it.vraag)} ${goedCount(it) >= 3 ? '<span class="badge b-groen">3× correct ✓</span>':''}</div>
+        <div class="sub"><span class="badge ${cls}">${txt}</span> · ${esc(vak ? vak.naam : '?')} · <span class="sessie-dots">${dots}</span></div></div>
+      <button class="knop klein licht" onclick="sessieResultaat('${it.id}','goed')">Goed</button>
+      <button class="knop klein gevaar" onclick="sessieResultaat('${it.id}','fout')">Fout</button>
+      <button class="del" onclick="delItem('${it.id}')" aria-label="verwijderen">×</button>
+    </div>`;
+  }).join('') : '<div class="leeg">Nog geen leeritems. Voeg begrippen of vragen toe.</div>';
+  /* spacing calculator */
+  const spacingVak = S.study.vakken.find(v => v.id === (window._spacingVak || '')) || S.study.vakken.find(v => v.examDate && daysUntil(v.examDate) > 0);
+  let spacingHtml = '';
+  if(spacingVak && spacingVak.examDate && daysUntil(spacingVak.examDate) > 0){
+    const R = daysUntil(spacingVak.examDate);
+    spacingHtml = [0, .4, .7, .9].map((p, i) => {
+      const datum = addDays(todayISO(), Math.round(R * p));
+      return `<div class="rij">
+        <span class="badge b-terra">${Math.round(p*100)}%</span>
+        <div class="groei"><div class="titel">Moment ${i+1}: ${fmtDate(datum)}</div>
+        <div class="sub">${i === 0 ? 'vandaag beginnen' : Math.round(R*p) + ' dagen vanaf nu'}</div></div>
+        <a class="knop klein licht" style="text-decoration:none" target="_blank" rel="noopener"
+          href="${gcalLink('Leren: '+spacingVak.naam+' (moment '+(i+1)+'/4)', datum, '19:00','20:00','Spaced-practice-moment uit LIFE OS. Actief ophalen, niet herlezen.')}">📅 zet in agenda</a>
+      </div>`;
+    }).join('');
+  } else {
+    spacingHtml = '<div class="leeg">Kies een vak met een tentamendatum in de toekomst.</div>';
+  }
+  /* overhoren */
+  const teDoen = overhoorQueue().length;
+  let quizHtml = '';
+  if(quiz){
+    const it = S.study.items.find(x => x.id === quiz.queue[quiz.idx]);
+    if(it){
+      const vak = S.study.vakken.find(v => v.id === it.vak);
+      quizHtml = `<div class="card soft" id="quiz-card">
+        <h2>Overhoren · ${quiz.idx+1}/${quiz.queue.length}</h2>
+        <div class="sub" style="color:var(--grijs);font-size:.8rem">${esc(vak ? vak.naam : '')}</div>
+        <div class="quiz-vraag">${esc(it.vraag)}</div>
+        ${quiz.toonAntwoord
+          ? `<div class="quiz-antwoord">${esc(it.antwoord || '(geen antwoord ingevuld)')}</div>
+             <div class="formrij">
+               <button class="knop" style="flex:1" onclick="quizAntwoord('goed')">Goed ✓</button>
+               <button class="knop gevaar" style="flex:1" onclick="quizAntwoord('fout')">Fout ✗</button>
+             </div>`
+          : `<div class="formrij"><button class="knop terra" style="flex:1" onclick="quiz.toonAntwoord=true;renderLeren()">Toon antwoord</button></div>`}
+        <div class="formrij"><button class="knop licht klein" onclick="quiz=null;renderLeren()">Stoppen</button></div>
+      </div>`;
+    }
+  }
+  /* sessielog */
+  const sessies = [...S.study.sessions].sort((a,b) => b.date.localeCompare(a.date)).slice(0, 20);
+  $('#tab-leren').innerHTML = `
+    <div class="datekop"><h1>Leren</h1><div class="sub">Ophalen voelt zwaarder dan herlezen — dat is juist het teken dat het werkt.</div></div>
+    ${quizHtml || `<div class="card soft"><h2>Overhoormodus</h2>
+      <p style="font-size:.9rem">${teDoen ? teDoen + ' item(s) klaar om te overhoren — achterstallig en vaakst-fout eerst.' : 'Geen items met een antwoord om te overhoren.'}</p>
+      <div class="formrij"><button class="knop terra" onclick="startOverhoren()" ${teDoen ? '':'disabled style="opacity:.5"'}>Overhoor mij</button></div>
+    </div>`}
+    <div class="card"><h2>Vakken &amp; tentamens</h2>${vakkenHtml}
+      <div class="formrij">
+        <input id="vak-naam" placeholder="Vaknaam">
+        <input id="vak-datum" type="date">
+        <button class="knop" onclick="addVak()">+ vak</button>
+      </div>
+      <div class="hint">Aanbevolen tussenpoos = 10–20% van de tijd tot het tentamen (Cepeda 2008). De app rekent met 15%.</div>
+    </div>
+    <div class="card"><h2>Relearning-tracker</h2>
+      <div class="hint" style="margin-bottom:.5rem">Doel: elk item 3× correct ophalen (Rawson &amp; Dunlosky 2013 — 68% vs. 26% retentie weken later).</div>
+      ${itemsHtml}
+      <div class="formrij">
+        <select id="item-vak">${vakOpties || '<option value="">eerst een vak toevoegen</option>'}</select>
+        <input id="item-vraag" placeholder="Begrip of vraag">
+      </div>
+      <div class="formrij">
+        <input id="item-antwoord" placeholder="Antwoord (voor overhoormodus)">
+        <button class="knop" onclick="addItem()">+ item</button>
+      </div>
+    </div>
+    <div class="card"><h2>Spacing-calculator</h2>
+      <div class="formrij"><select id="spacing-vak" onchange="window._spacingVak=this.value;renderLeren()">
+        ${S.study.vakken.map(v => `<option value="${v.id}" ${spacingVak && spacingVak.id === v.id ? 'selected':''}>${esc(v.naam)}</option>`).join('') || '<option value="">geen vakken</option>'}
+      </select></div>
+      <div class="hint" style="margin-bottom:.4rem">Vier aanraakmomenten op 0%, 40%, 70% en 90% van de resterende tijd tot het tentamen.</div>
+      ${spacingHtml}
+    </div>
+    <div class="card"><h2>Sessielog</h2>
+      <div class="formrij">
+        <input type="date" id="ses-date" value="${todayISO()}">
+        <select id="ses-vak">${vakOpties || '<option value="">—</option>'}</select>
+        <input type="number" id="ses-min" placeholder="min." min="1" style="width:80px">
+        <select id="ses-tech">${TECHNIEKEN.map(t => '<option>'+t+'</option>').join('')}</select>
+        <button class="knop" onclick="addSessie()">+ log</button>
+      </div>
+      ${sessies.length ? sessies.map(s => {
+        const vak = S.study.vakken.find(v => v.id === s.vak);
+        return `<div class="rij"><div class="groei"><div class="titel">${esc(vak ? vak.naam : s.vak)} · ${s.minuten} min</div>
+          <div class="sub">${fmtDate(s.date)} · ${esc(s.techniek)}${s.techniek === 'Herlezen (betrapt)' ? ' 😅':''}</div></div></div>`;
+      }).join('') : '<div class="leeg">Nog geen leersessies gelogd.</div>'}
+    </div>
+    <details class="card soft"><summary>Cheat-sheet: wat werkt echt</summary>
+      <ul style="padding-left:1.2rem;font-size:.88rem;margin-top:.5rem">
+        <li><strong>Toets jezelf</strong> in plaats van herlezen — sterkste techniek die er is (Adesope 2017, Yang 2021). Het voelt slechter, en juist dat is het teken dat het werkt.</li>
+        <li><strong>Spreid je sessies</strong>: tussenpoos ≈ 10–20% van de tijd tot de toets (Cepeda). Te lang gat kost weinig, te kort kost veel.</li>
+        <li><strong>3× correct ophalen</strong> per item, en later opnieuw — successive relearning is een vol cijferpunt winst (Rawson &amp; Dunlosky 2013).</li>
+        <li><strong>Mix oefentypes</strong> bij wiskunde-achtige vakken (interleaving, Rohrer 2020) — werkt niet voor woordjes.</li>
+        <li><strong>Leg jezelf uit wáárom</strong> een stap klopt (self-explanation, Bisra 2018); parafraseren telt niet. Herlezen, markeren en leerstijlen: overslaan — cramming is een lening tegen woekerrente.</li>
+      </ul>
+    </details>`;
+}
+function addVak(){
+  const naam = $('#vak-naam').value.trim(); if(!naam) return;
+  S.study.vakken.push({id:uid(), naam, examDate:$('#vak-datum').value || ''});
+  save('study');
+}
+function setExamDate(id, v){ const vak = S.study.vakken.find(x => x.id === id); if(vak){ vak.examDate = v; save('study'); } }
+function delVak(id){
+  if(!confirm('Vak verwijderen? Bijbehorende leeritems blijven staan.')) return;
+  S.study.vakken = S.study.vakken.filter(x => x.id !== id); save('study');
+}
+function addItem(){
+  const vraag = $('#item-vraag').value.trim(); if(!vraag) return;
+  S.study.items.push({id:uid(), vak:$('#item-vak').value, vraag, antwoord:$('#item-antwoord').value.trim(), sessies:[], lastSession:'', nextReview:''});
+  save('study');
+}
+function delItem(id){ S.study.items = S.study.items.filter(x => x.id !== id); save('study'); }
+function sessieResultaat(id, res){
+  const it = S.study.items.find(x => x.id === id); if(!it) return;
+  it.sessies = it.sessies || [];
+  it.sessies.push(res);
+  if(it.sessies.length > 6) it.sessies = it.sessies.slice(-6);
+  it.lastSession = todayISO();
+  it.nextReview = addDays(todayISO(), vakGap(it.vak));
+  save('study');
+}
+function overhoorQueue(){
+  /* achterstallig eerst, dan laagste goed-reeks */
+  return S.study.items
+    .filter(it => (it.antwoord||'').length)
+    .sort((a,b) => {
+      const oa = a.nextReview && a.nextReview <= todayISO() ? 0 : 1;
+      const ob = b.nextReview && b.nextReview <= todayISO() ? 0 : 1;
+      return oa !== ob ? oa - ob : goedCount(a) - goedCount(b);
+    })
+    .map(it => it.id);
+}
+function startOverhoren(){
+  const q = overhoorQueue();
+  if(!q.length) return;
+  quiz = {queue:q, idx:0, toonAntwoord:false};
+  renderLeren();
+  const el = $('#quiz-card'); if(el) el.scrollIntoView({behavior:'smooth'});
+}
+function quizAntwoord(res){
+  if(!quiz) return;
+  sessieResultaat(quiz.queue[quiz.idx], res); /* voedt de relearning-tracker (zelfde datastructuur) */
+  if(quiz && quiz.idx < quiz.queue.length - 1){ quiz.idx++; quiz.toonAntwoord = false; }
+  else quiz = null;
+  renderLeren();
+}
+function addSessie(){
+  const min = Number($('#ses-min').value);
+  if(!min) return;
+  S.study.sessions.push({date:$('#ses-date').value || todayISO(), vak:$('#ses-vak').value, minuten:min, techniek:$('#ses-tech').value});
+  save('study');
+}
+/* ================= Taken ================= */
+let taakFilter = 'alles';
+function renderTaken(){
+  const sortKey = t => {
+    if(isOverdue(t.due, t.done)) return '0' + (t.due||'');
+    if(t.due === todayISO()) return '1';
+    if(t.due) return '2' + t.due;
+    return '3';
+  };
+  let lijst = S.tasks.list.filter(t => taakFilter === 'alles' || t.domein === taakFilter);
+  const open = lijst.filter(t => !t.done).sort((a,b) => sortKey(a).localeCompare(sortKey(b)));
+  const klaar = lijst.filter(t => t.done);
+  const rij = t => {
+    let badge = '';
+    if(!t.done && isOverdue(t.due, t.done)) badge = `<span class="badge b-rood">achterstallig · ${fmtDate(t.due)}</span>`;
+    else if(!t.done && t.due === todayISO()) badge = '<span class="badge b-amber">vandaag</span>';
+    else if(t.due) badge = `<span class="badge b-grijs">${fmtDate(t.due)}</span>`;
+    return `<div class="rij ${t.done?'klaar':''}">
+      <input type="checkbox" class="chk" ${t.done?'checked':''} onchange="taakKlaar('${t.id}')">
+      <div class="groei"><div class="titel">${esc(t.titel)}</div>
+      <div class="sub">${badge} ${esc(t.domein)}</div></div>
+      <button class="del" onclick="delTaak('${t.id}')" aria-label="verwijderen">×</button>
+    </div>`;
+  };
+  $('#tab-taken').innerHTML = `
+    <div class="datekop"><h1>Taken</h1><div class="sub">School · werk · business · thuis</div></div>
+    <div class="card"><h2>Nieuwe taak</h2>
+      <div class="formrij">
+        <input id="taak-titel" placeholder="Wat moet er gebeuren?" style="flex:2">
+        <select id="taak-domein">${DOMEINEN.map(d => '<option>'+d+'</option>').join('')}</select>
+        <input id="taak-due" type="date">
+        <button class="knop" onclick="addTaak()">+ taak</button>
+      </div>
+    </div>
+    <div class="filterrij">
+      ${['alles', ...DOMEINEN].map(f => `<button class="${taakFilter === f ? 'active':''}" onclick="taakFilter='${f}';renderTaken()">${f === 'alles' ? 'Alles' : f}</button>`).join('')}
+    </div>
+    <div class="card">
+      ${open.length ? open.map(rij).join('') : '<div class="leeg">Geen open taken… verdacht rustig.</div>'}
+    </div>
+    ${klaar.length ? `<details class="card"><summary>Afgerond (${klaar.length})</summary>${klaar.map(rij).join('')}</details>` : ''}`;
+}
+function addTaak(){
+  const titel = $('#taak-titel').value.trim(); if(!titel) return;
+  S.tasks.list.push({id:uid(), titel, domein:$('#taak-domein').value, due:$('#taak-due').value || '', done:false});
+  save('tasks');
+}
+function taakKlaar(id){ const t = S.tasks.list.find(x => x.id === id); if(t){ t.done = !t.done; save('tasks'); } }
+function delTaak(id){ S.tasks.list = S.tasks.list.filter(x => x.id !== id); save('tasks'); }
+/* ================= Geld ================= */
+function renderGeld(){
+  const m = S.money.monthly;
+  const totaal = m.reduce((s,x) => s + Number(x.bedrag || 0), 0);
+  const vast = m.filter(x => x.vast).reduce((s,x) => s + Number(x.bedrag || 0), 0);
+  const b = S.money.business;
+  const netto = Number(b.omzet||0) - Number(b.uitgaven||0);
+  $('#tab-geld').innerHTML = `
+    <div class="datekop"><h1>Geld</h1><div class="sub">Maandkosten + business — bewust klein in v1</div></div>
+    <div class="tiles">
+      <div class="tile"><div class="lbl">Maandkosten totaal</div><div class="val">${euro(totaal)}</div></div>
+      <div class="tile"><div class="lbl">Waarvan vast</div><div class="val">${euro(vast)}</div></div>
+      <div class="tile ${netto < 0 ? 'warn':''}"><div class="lbl">Business netto (mnd)</div><div class="val">${euro(netto)}</div></div>
+    </div>
+    <div class="card"><h2>Maandkosten</h2>
+      ${m.length ? m.map((x,i) => `<div class="rij">
+        <div class="groei"><div class="titel">${esc(x.item)}</div>
+        <div class="sub">${x.vast ? '<span class="badge b-grijs">vast</span>' : '<span class="badge b-amber">variabel</span>'}</div></div>
+        <strong>${euro(Number(x.bedrag||0))}</strong>
+        <button class="del" onclick="delKost(${i})" aria-label="verwijderen">×</button>
+      </div>`).join('') : '<div class="leeg">Nog geen kostenposten. Denk: huur, boodschappen, telefoon, sport, verzekeringen, abonnementen.</div>'}
+      <div class="formrij">
+        <input id="kost-item" placeholder="Kostenpost" style="flex:2">
+        <input id="kost-bedrag" type="number" step="0.01" min="0" placeholder="€" style="width:100px">
+        <select id="kost-vast"><option value="1">vast</option><option value="0">variabel</option></select>
+        <button class="knop" onclick="addKost()">+ post</button>
+      </div>
+    </div>
+    <div class="card"><h2>Business deze maand</h2>
+      <div class="formrij" style="align-items:flex-end">
+        <label style="flex:1;font-size:.8rem">Omzet<br><input type="number" step="0.01" min="0" value="${b.omzet||0}" onchange="setBusiness('omzet',this.value)" style="width:100%"></label>
+        <label style="flex:1;font-size:.8rem">Uitgaven<br><input type="number" step="0.01" min="0" value="${b.uitgaven||0}" onchange="setBusiness('uitgaven',this.value)" style="width:100%"></label>
+      </div>
+      <p style="margin-top:.6rem">Netto: <strong style="color:${netto >= 0 ? 'var(--groen)' : 'var(--rood-t)'}">${euro(netto)}</strong></p>
+      <div class="hint">Handmatig bijhouden; automatische Gumroad/Etsy-koppeling is v2.</div>
+    </div>`;
+}
+function addKost(){
+  const item = $('#kost-item').value.trim(); if(!item) return;
+  S.money.monthly.push({item, bedrag:Number($('#kost-bedrag').value)||0, vast:$('#kost-vast').value === '1'});
+  save('money');
+}
+function delKost(i){ S.money.monthly.splice(i, 1); save('money'); }
+function setBusiness(k, v){ S.money.business[k] = Number(v)||0; save('money'); }
+/* ================= Agenda ================= */
+function renderAgenda(){
+  const src = (S.settings.gcalEmbedSrc||'').trim();
+  const isFile = location.protocol === 'file:';
+  let inhoud;
+  if(src && !isFile){
+    inhoud = `<iframe class="agenda-frame" src="${esc(src)}" title="Google Agenda"></iframe>
+      <div class="hint">Laadt de agenda niet? Log in bij Google in deze browser, of gebruik de knop hieronder.</div>
+      <div class="formrij"><a class="knop licht" style="text-decoration:none" href="https://calendar.google.com" target="_blank" rel="noopener">Open Google Agenda ↗</a></div>`;
+  } else {
+    inhoud = `<div class="card soft" style="text-align:center;padding:2rem 1rem">
+      <p style="margin-bottom:.8rem">${isFile ? 'De agenda-embed werkt niet op een lokaal geopend bestand (file://).' : 'Nog geen embed-URL ingesteld — zie Instellingen → Google Agenda.'}</p>
+      <a class="knop" style="text-decoration:none" href="https://calendar.google.com" target="_blank" rel="noopener">Open Google Agenda ↗</a>
+    </div>`;
+  }
+  const kook = volgendeKookdatum() || todayISO();
+  $('#tab-agenda').innerHTML = `
+    <div class="datekop"><h1>Agenda</h1><div class="sub">Google Agenda + snelle event-links</div></div>
+    ${inhoud}
+    <div class="card"><h2>Nieuw event</h2>
+      <input id="ev-titel" placeholder="Titel" style="width:100%">
+      <div class="formrij">
+        <input type="date" id="ev-datum" value="${todayISO()}">
+        <input type="time" id="ev-van" value="19:00">
+        <input type="time" id="ev-tot" value="20:00">
+      </div>
+      <input id="ev-notitie" placeholder="Notitie (optioneel)" style="width:100%;margin-top:.5rem">
+      <div class="formrij"><button class="knop" onclick="maakEvent()">Open in Google Agenda ↗</button></div>
+    </div>
+    <div class="card"><h2>Snelkoppelingen</h2>
+      <div class="formrij">
+        <a class="knop licht" style="text-decoration:none" target="_blank" rel="noopener"
+          href="${gcalLink('Kookronde '+S.freezer.nextRound+' — '+RONDE_NAMEN[S.freezer.nextRound], kook, '14:00','16:30','LIFE OS kookdag — draaiboek staat in de app.')}">🍳 Kookronde (2½ u)</a>
+        <a class="knop licht" style="text-decoration:none" target="_blank" rel="noopener"
+          href="${gcalLink('Training', addDays(todayISO(),1), '17:00','18:00','Gepland via LIFE OS.')}">🏋️ Training (morgen)</a>
+      </div>
+      <div class="hint">Spacing-momenten plan je vanuit de Leren-tab.</div>
+    </div>`;
+}
+function maakEvent(){
+  const titel = $('#ev-titel').value.trim() || 'Nieuw event';
+  const datum = $('#ev-datum').value || todayISO();
+  const van = $('#ev-van').value || '19:00';
+  const tot = $('#ev-tot').value || '20:00';
+  window.open(gcalLink(titel, datum, van, tot, $('#ev-notitie').value.trim()), '_blank', 'noopener');
+}
+/* ================= Instellingen ================= */
+const SB_SQL = `create table if not exists lifeos (
+  id text primary key,
+  data jsonb not null,
+  updated_at timestamptz not null default now()
+);
+alter table lifeos enable row level security;
+-- Let op: iedereen met jouw project-URL + anon key kan lezen/schrijven.
+-- Prima voor persoonlijk gebruik zolang je de URL/keys niet publiek deelt.
+create policy "anon all" on lifeos for all using (true) with check (true);`;
+function renderInstellingen(){
+  $('#tab-instellingen').innerHTML = `
+    <div class="datekop"><h1>Instellingen</h1></div>
+    <div class="card"><h2>Profiel</h2>
+      <label class="veldlabel" for="set-naam">Naam</label>
+      <input id="set-naam" value="${esc(S.settings.name)}" onchange="setSetting('name',this.value)" style="width:100%;max-width:300px">
+    </div>
+    <div class="card"><h2>Supabase-sync</h2>
+      <p style="font-size:.85rem"><span class="statusdot ${syncStatus.state==='gesynct'?'groen':syncStatus.state==='fout'?'rood':''}" id="sync-dot"></span><span id="sync-txt">${syncStatus.state==='gesynct'?'Gesynct met Supabase':syncStatus.state==='fout'?'Sync-fout: '+esc(syncStatus.msg):'Alleen lokaal opgeslagen'}</span></p>
+      <label class="veldlabel" for="set-sburl">Project-URL</label>
+      <input id="set-sburl" placeholder="https://xxxx.supabase.co" value="${esc(S.settings.supabaseUrl)}" onchange="setSetting('supabaseUrl',this.value)" style="width:100%">
+      <label class="veldlabel" for="set-sbkey">Anon key</label>
+      <input id="set-sbkey" placeholder="eyJ…" value="${esc(S.settings.supabaseKey)}" onchange="setSetting('supabaseKey',this.value)" style="width:100%">
+      <div class="formrij"><button class="knop" onclick="testSupabase()">Test verbinding</button><span id="sb-test-result" style="align-self:center"></span></div>
+      <details style="margin-top:.7rem"><summary>Eenmalige setup: SQL voor de Supabase-editor</summary>
+        <pre class="sql" id="sb-sql">${esc(SB_SQL)}</pre>
+        <div class="formrij"><button class="knop klein licht" onclick="navigator.clipboard&&navigator.clipboard.writeText(document.getElementById('sb-sql').textContent)">Kopieer SQL</button></div>
+      </details>
+      <div class="hint">Maak gratis een project op supabase.com, plak bovenstaande SQL in de SQL-editor, en zet hier je Project-URL en anon key (Settings → API). De app werkt ook zonder — dan blijft alles alleen lokaal. Let op: wie deze URL + key heeft kan je data lezen/schrijven, dus deel het bestand niet publiek. (v2: Supabase Auth.)</div>
+    </div>
+    <div class="card"><h2>Google Agenda</h2>
+      <label class="veldlabel" for="set-gcal">Embed-URL (src)</label>
+      <input id="set-gcal" placeholder="https://calendar.google.com/calendar/embed?src=…" value="${esc(S.settings.gcalEmbedSrc)}" onchange="setSetting('gcalEmbedSrc',this.value)" style="width:100%">
+      <div class="hint">Zo vind je die: Google Agenda op desktop → tandwiel → Instellingen → kies je agenda → “Agenda integreren” → kopieer uit de embed-code alleen de URL die in src="…" staat.</div>
+    </div>
+    <div class="card"><h2>Backup</h2>
+      <div class="formrij">
+        <button class="knop" onclick="exportJSON()">Exporteer JSON</button>
+        <label class="knop licht" style="display:inline-flex;align-items:center;cursor:pointer">Importeer JSON
+          <input type="file" accept=".json,application/json" style="display:none" onchange="importJSON(this)"></label>
+        <button class="knop gevaar" onclick="resetAll()">Reset alles</button>
+      </div>
+      <div class="hint">Tip: wekelijks even exporteren. iOS kan localStorage wissen als je de app extreem lang niet gebruikt.</div>
+    </div>
+    <div class="card soft"><h2>Over</h2>
+      <p style="font-size:.85rem">LIFE OS v1 — persoonlijke app van Bink. Eén HTML-bestand: vriezer &amp; kookrondes, sport, evidence-based leren, taken, geld en agenda. Data lokaal (localStorage) + optionele Supabase-sync.</p>
+    </div>`;
+}
+function setSetting(k, v){
+  S.settings[k] = v.trim();
+  save('settings');
+  if(k === 'supabaseUrl' || k === 'supabaseKey'){ if(sbCfg()) syncPull(); else setSync('lokaal'); }
+}
+function exportJSON(){
+  const blob = new Blob([JSON.stringify(S, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'lifeos-backup-' + todayISO() + '.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+function importJSON(input){
+  const f = input.files && input.files[0]; if(!f) return;
+  const rd = new FileReader();
+  rd.onload = () => {
+    try{
+      const data = JSON.parse(rd.result);
+      if(!data.settings || !data.freezer) throw new Error('Geen geldig LIFE OS-bestand');
+      S = data;
+      for(const k of Object.keys(S)) S[k].updated_at = new Date().toISOString();
+      persist(); renderAll();
+      for(const k of Object.keys(S)) syncPush(k);
+      alert('Import gelukt ✓');
+    }catch(e){ alert('Import mislukt: ' + e.message); }
+  };
+  rd.readAsText(f);
+}
+function resetAll(){
+  if(!confirm('Weet je het zeker? Dit wist ALLE lokale data (Supabase-data blijft staan).')) return;
+  localStorage.removeItem(KEY);
+  location.reload();
+}
+/* ================= render & init ================= */
+function renderAll(){
+  renderVandaag(); renderEten(); renderSport(); renderLeren(); renderTaken(); renderGeld(); renderAgenda(); renderInstellingen();
+}
+bouwNav();
+renderAll();
+showTab('vandaag');
+if(sbCfg()) syncPull();
+/* voor tests & console */
+window.lifeos = {gapVoorDagen, addDays, daysBetween, daysUntil, isOverdue, weekStart, volgendeKookdatum, avondetenSuggestie, get store(){ return S; }};
+</script>
+</body>
+</html>
