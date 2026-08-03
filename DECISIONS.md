@@ -89,6 +89,12 @@ Alle regels in de app zijn tegen voedingscentrum.nl gecontroleerd:
 - **Kruidenmixen:** batch-verhoudingen per potje, met geverifieerde houdbaarheid — piek-aroma ±6 maanden, kwaliteitsvenster 1–2 jaar (McCormick zegt 1–2 jaar voor blends; specerijenhandel noemt 4–8 maanden piek), nooit "bedorven" in voedselveiligheidszin. Dosering ~1 el (≈8 g) per 500 g vlees, conform rub-standaard 1 el per pond. ([McCormick](https://www.mccormick.com/blogs/how-to/how-long-do-spices-last), [RawSpiceBar](https://rawspicebar.com/blogs/spices-101/how-long-do-ground-spices-last))
 - Vriezerporties loggen automatisch mee in het maaltijdlog (één handeling = voorraad − 1 én macro's geteld). Vriezergerecht-macro's zijn schattingen op receptniveau, gemarkeerd als zodanig.
 
+**Kookronde-planner (vervangt de vaste 4-rondes-rotatie):**
+- Je stelt per 16-daagse ronde zelf 4 gerechten samen: een **compleet gerecht** (een van de 16 klassiekers of een eigen recept) óf een **eigen mix** van componenten (eiwitbereiding + saus + koolhydraat + groente). Een mix wordt één gerecht met opgetelde macro's, en is later met één tik als één maaltijd te loggen.
+- De **boodschappenlijst wordt gegenereerd** uit de ingrediënten van alle geplande gerechten; identieke regels worden samengevoegd met een aantal ("2× 1 ui"). Bewust géén hoeveelheden-parsing van vrije tekst — samenvoegen op identieke regels is transparant en foutloos; afgevinkte regels blijven staan zolang de regel niet wijzigt.
+- Het **kookdag-draaiboek wordt gegenereerd** volgens de logica van het originele systeem: langste suddertijd eerst, richttijden per gerecht (mise en place → gerechten gestaffeld → proeven → portioneren/invriezen), met de echte bereidingsstappen per component. Koolhydraat-componenten worden expliciet uitgesteld naar de eetdag (regel: koolhydraten vers koken).
+- Oude data migreert automatisch: vaste gerechten met porties > 0 worden voorraad-items (schema v4).
+
 ## 9. Voedings- & gewichtsdoelen (Sport-tab)
 
 Alle parameters komen uit de primaire sportvoedingsliteratuur:
