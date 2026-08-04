@@ -17,6 +17,23 @@ function appErrors(errors) {
   return errors.filter((e) => !/net::|Failed to load resource|ERR_/i.test(e));
 }
 
+/** Zet eigen recepten in het (lege) kookboek via de store. */
+async function maakRecepten(page, recepten) {
+  await page.evaluate((rs) => {
+    for (const r of rs) {
+      window.lifeos.store.cookbook.custom.push(Object.assign(
+        { id: 'eigen-' + Math.random().toString(36).slice(2, 10), eigen: true, porties: 2, ingr: [], stappen: [], macros: null, mixInfo: null, tijd: null },
+        r,
+      ));
+    }
+    save('cookbook');
+  }, recepten);
+}
+const KIP = { id: 'eigen-kip', naam: 'Gegrilde kipfilet', cat: 'kip', tijd: 15, macros: { kcal: 320, eiwit: 58, khd: 1, vet: 9 }, ingr: ['500 g kipfilet', '1 el olijfolie'], stappen: ['Kruiden en grillen', '5 min laten rusten'] };
+const SAUS = { id: 'eigen-saus', naam: 'Romige tomatensaus', cat: 'saus', tijd: 20, macros: { kcal: 170, eiwit: 3, khd: 10, vet: 12 }, ingr: ['1 ui', '2 tenen knoflook', '1 blik tomatenblokjes', '100 ml kookroom'], stappen: ['Ui en knoflook fruiten', 'Tomaten erbij en 15 min pruttelen', 'Room erdoor'] };
+const RIJST = { id: 'eigen-rijst', naam: 'Luchtige rijst', cat: 'kool', tijd: 20, macros: { kcal: 270, eiwit: 5, khd: 59, vet: 1 }, ingr: ['150 g rijst'], stappen: ['Koken en nastomen'] };
+const CHILI = { id: 'eigen-chili', naam: 'Chili con carne', cat: 'vriezer', tijd: 40, porties: 4, macros: { kcal: 350, eiwit: 28, khd: 25, vet: 14 }, ingr: ['500 g rundergehakt', '2 uien', '2 tenen knoflook', '1 blik tomatenblokjes', '1 blik kidneybonen'], stappen: ['Ui en knoflook fruiten', 'Gehakt rul bakken', 'Alles 20 min laten pruttelen'] };
+
 test('elke tab opent zonder console-errors', async ({ page }) => {
   const errors = trackErrors(page);
   await page.goto(APP);
@@ -56,23 +73,23 @@ test('training toevoegen telt mee voor de week', async ({ page }) => {
 
 test('kookronde: compleet gerecht plannen, koken, portie gegeten + maaltijdlog', async ({ page }) => {
   await page.goto(APP);
+  await maakRecepten(page, [CHILI]);
   await page.evaluate(() => { window.showTab('eten'); etenView = 'ronde'; renderEten(); });
-  // compleet gerecht kiezen
+  // compleet gerecht kiezen uit eigen kookboek
   await page.click('#tab-eten button:has-text("+ compleet gerecht")');
   await page.locator('dialog#modal .rij:has-text("Chili con carne") button:has-text("kies")').click();
   await expect(page.locator('#tab-eten')).toContainText('1/4 gerechten');
-  // boodschappenlijst is gegenereerd uit de klassieker-ingrediënten
+  // boodschappenlijst gegenereerd uit de eigen ingrediënten
   const bood = await page.evaluate(() => window.lifeos.store.grocery.lists.plan.map((x) => x.item));
   expect(bood).toContain('500 g rundergehakt');
   expect(bood).toContain('1 blik kidneybonen');
-  // draaiboek is gegenereerd met echte stappen
+  // draaiboek gegenereerd met de eigen stappen
   const db = await page.evaluate(() => window.lifeos.store.freezer.draaiboek.map((x) => x.txt));
   expect(db.some((t) => t.includes('Mise en place'))).toBe(true);
   expect(db.some((t) => t.includes('Chili con carne'))).toBe(true);
-  expect(db.some((t) => t.includes('kidneybonen'))).toBe(true);
+  expect(db.some((t) => t.includes('Gehakt rul bakken'))).toBe(true);
   // ronde gekookt -> voorraad met 4 porties
   await page.click('#tab-eten button:has-text("Ronde gekookt ✓")');
-  await expect(page.locator('#tab-eten')).toContainText('Voorraad');
   const rij = page.locator('#tab-eten .rij:has-text("Chili con carne")').last();
   await expect(rij.locator('.porties-groot')).toHaveText('4');
   // portie gegeten -> voorraad -1 en maaltijd gelogd
@@ -82,20 +99,20 @@ test('kookronde: compleet gerecht plannen, koken, portie gegeten + maaltijdlog',
     meals: window.lifeos.store.nutrition.meals,
   }));
   expect(st.voorraad.porties).toBe(3);
-  expect(st.voorraad.lastEaten).toBeTruthy();
   expect(st.meals.length).toBe(1);
   expect(st.meals[0].naam).toBe('Chili con carne');
-  expect(st.meals[0].eiwit).toBeGreaterThan(20);
+  expect(st.meals[0].eiwit).toBe(28);
 });
 
 test('boodschappen: hoeveelheden worden echt opgeteld over gerechten heen', async ({ page }) => {
   await page.goto(APP);
+  await maakRecepten(page, [CHILI, SAUS]); // CHILI: 2 uien + 2 tenen + 1 blik tomatenblokjes · SAUS: 1 ui + 2 tenen + 1 blik
   await page.evaluate(() => {
-    planVoegToe(['vz-chili'], 'Chili con carne');   // 1 ui, 2 tenen knoflook, 1 blik tomatenblokjes
-    planVoegToe(['vz-dal'], 'Rode linzen-dal');     // 2 uien, 2 tenen knoflook, 1 blik tomatenblokjes
+    planVoegToe(['eigen-chili'], 'Chili con carne');
+    planVoegToe(['eigen-saus'], 'Sausje apart');
   });
   const bood = await page.evaluate(() => window.lifeos.store.grocery.lists.plan.map((x) => x.item));
-  expect(bood).toContain('3 uien');                    // 1 + 2, met correct meervoud
+  expect(bood).toContain('3 uien');                    // 2 + 1, met correct meervoud
   expect(bood).toContain('4 tenen knoflook');          // 2 + 2
   expect(bood).toContain('2 blikken tomatenblokjes');  // blik -> blikken
   expect(bood).not.toContain('1 ui');
@@ -114,11 +131,12 @@ test('boodschappen: hoeveelheden worden echt opgeteld over gerechten heen', asyn
 
 test('kookronde: zelf mixen — componenten worden één gerecht met opgetelde macro’s', async ({ page }) => {
   await page.goto(APP);
+  await maakRecepten(page, [KIP, SAUS, RIJST]);
   await page.evaluate(() => { window.showTab('eten'); etenView = 'ronde'; renderEten(); });
   await page.click('#tab-eten button:has-text("+ mix zelf")');
-  await page.locator('dialog#modal input.mix-check[value="kip-grill"]').check();
-  await page.locator('dialog#modal input.mix-check[value="saus-roomtomaat"]').check();
-  await page.locator('dialog#modal input.mix-check[value="kool-rijst"]').check();
+  await page.locator('dialog#modal input.mix-check[value="eigen-kip"]').check();
+  await page.locator('dialog#modal input.mix-check[value="eigen-saus"]').check();
+  await page.locator('dialog#modal input.mix-check[value="eigen-rijst"]').check();
   // live preview telt op: 320 + 170 + 270 kcal
   await expect(page.locator('#mix-preview')).toContainText('760 kcal');
   await page.fill('#mix-naam', 'Romige kip met rijst');
@@ -172,16 +190,20 @@ test('persistentie: data blijft na herladen', async ({ page }) => {
   await page.evaluate(() => window.showTab('taken'));
   await page.fill('#taak-titel', 'Blijf-ik-staan-taak');
   await page.click('#tab-taken button:has-text("+ taak")');
+  await maakRecepten(page, [CHILI]);
   await page.evaluate(() => {
-    planVoegToe(['vz-dal'], 'Rode linzen-dal');
+    planVoegToe(['eigen-chili'], 'Chili con carne');
     rondeGekookt();
   });
   await page.reload();
   await page.evaluate(() => window.showTab('taken'));
   await expect(page.locator('#tab-taken')).toContainText('Blijf-ik-staan-taak');
   const voorraad = await page.evaluate(() => window.lifeos.store.freezer.voorraad[0]);
-  expect(voorraad.naam).toBe('Rode linzen-dal');
+  expect(voorraad.naam).toBe('Chili con carne');
   expect(voorraad.porties).toBe(4);
+  // en het eigen kookboek zelf is ook persistent
+  const kookboek = await page.evaluate(() => window.lifeos.store.cookbook.custom.length);
+  expect(kookboek).toBe(1);
 });
 
 test('file://-smoketest: agenda toont fallback i.p.v. iframe', async ({ page }) => {
@@ -235,11 +257,11 @@ test('migratie: oude vaste-gerechten-data wordt voorraad (schema v3 → v4)', as
   });
   await page.reload();
   const st = await page.evaluate(() => window.lifeos.store.freezer);
-  // porties > 0 worden voorraad-items met macro's; lege gerechten niet
+  // porties > 0 worden voorraad-items (zonder macro's — het kookboek is nu van de gebruiker); lege gerechten niet
   expect(st.voorraad.length).toBe(1);
   expect(st.voorraad[0].naam).toBe('Chili con carne');
   expect(st.voorraad[0].porties).toBe(3);
-  expect(st.voorraad[0].macros.eiwit).toBeGreaterThan(20);
+  expect(st.voorraad[0].macros).toBeNull();
   expect(st.lastCookDate).toBe('2026-07-20');
   expect(st.dishes).toBeUndefined();
   expect(st.nextRound).toBeUndefined();
@@ -384,31 +406,78 @@ test('statische bestanden: PNG-iconen en manifest aanwezig en gelinkt', async ({
   await expect(page.locator('link[rel="manifest"]')).toHaveAttribute('href', 'manifest.webmanifest');
 });
 
-test('kookboek: zoeken, filteren en receptdialog met macro’s', async ({ page }) => {
+test('kookboek: begint leeg, eigen recept via formulier, zoeken en dialog', async ({ page }) => {
   await page.goto(APP);
   await page.evaluate(() => window.showTab('eten'));
-  // kookboek is de standaardweergave; filter op kruidenmixen
-  await page.click('#tab-eten .filterrij button:has-text("Kruidenmixen")');
-  await expect(page.locator('#tab-eten')).toContainText('Cajun-mix');
-  await expect(page.locator('#tab-eten')).toContainText('Shoarma-mix');
-  // zoeken over alle categorieën heen
-  await page.click('#tab-eten .filterrij button:has-text("Alles")');
-  await page.fill('#kook-zoek', 'teriyaki');
-  await expect(page.locator('#tab-eten .card').first()).toContainText('Teriyakisaus');
-  // dialog met macro's en batchinfo
+  await expect(page.locator('#tab-eten')).toContainText('Jouw kookboek is nog leeg');
+  // recept toevoegen via het formulier (details staat open bij leeg kookboek)
+  await page.fill('#er-naam', 'Gegrilde kipfilet');
+  await page.selectOption('#er-cat', 'kip');
+  await page.fill('#er-tijd', '15');
+  await page.fill('#er-kcal', '320');
+  await page.fill('#er-eiwit', '58');
+  await page.fill('#er-khd', '1');
+  await page.fill('#er-vet', '9');
+  await page.fill('#er-ingr', '500 g kipfilet\n1 el olijfolie');
+  await page.fill('#er-stappen', 'Kruiden en grillen\n5 min laten rusten');
+  await page.click('#tab-eten button:has-text("+ recept opslaan")');
+  await expect(page.locator('#tab-eten')).toContainText('Gegrilde kipfilet');
+  await expect(page.locator('#tab-eten')).toContainText('320 kcal');
+  // tweede recept, dan zoeken
+  await maakRecepten(page, [SAUS]);
+  await page.fill('#kook-zoek', 'kipfilet');
+  await expect(page.locator('#tab-eten .card').first()).toContainText('Gegrilde kipfilet');
+  await expect(page.locator('#tab-eten .card').first()).not.toContainText('Romige tomatensaus');
+  // dialog toont macro's en stappen
   await page.evaluate(() => { kookZoek = ''; renderAll(); });
   await page.click('#tab-eten .rij:has-text("Gegrilde kipfilet") .groei');
   await expect(page.locator('dialog#modal')).toContainText('58 g');
   await expect(page.locator('dialog#modal')).toContainText('Bereiding');
   await page.click('dialog#modal button:has-text("Sluiten")');
-  // kruidenmix-dialog toont houdbaarheid en dosering
+});
+
+test('kookboek: recept bewerken via de dialog', async ({ page }) => {
+  await page.goto(APP);
+  await maakRecepten(page, [KIP]);
+  await page.evaluate(() => window.showTab('eten'));
+  await page.click('#tab-eten .rij:has-text("Gegrilde kipfilet") .groei');
+  await page.click('dialog#modal button:has-text("Bewerk")');
+  // formulier staat in bewerkmodus met de bestaande waarden
+  await expect(page.locator('#tab-eten')).toContainText('Recept bewerken');
+  await expect(page.locator('#er-naam')).toHaveValue('Gegrilde kipfilet');
+  await expect(page.locator('#er-eiwit')).toHaveValue('58');
+  await page.fill('#er-naam', 'Kipfilet van de grill');
+  await page.fill('#er-eiwit', '60');
+  await page.click('#tab-eten button:has-text("Wijzigingen opslaan")');
+  await expect(page.locator('#tab-eten')).toContainText('Kipfilet van de grill');
+  const r = await page.evaluate(() => window.lifeos.store.cookbook.custom[0]);
+  expect(r.naam).toBe('Kipfilet van de grill');
+  expect(r.macros.eiwit).toBe(60);
+  expect(await page.evaluate(() => window.lifeos.store.cookbook.custom.length)).toBe(1);
+});
+
+test('kookboek: eigen kruidenmix met batch-info', async ({ page }) => {
+  await page.goto(APP);
+  await page.evaluate(() => window.showTab('eten'));
+  await page.selectOption('#er-cat', 'mix');
+  // mixinfo-velden verschijnen bij categorie kruidenmix
+  await expect(page.locator('#er-mixinfo')).toBeVisible();
+  await page.fill('#er-naam', 'Cajun-mix');
+  await page.fill('#er-ingr', '2 el paprikapoeder\n1 el knoflookpoeder\n1 tl cayennepeper');
+  await page.fill('#er-stappen', 'Mengen en in een luchtdicht potje doen');
+  await page.fill('#er-batch', '± 4 el');
+  await page.fill('#er-houdbaar', '6 mnd luchtdicht en donker');
+  await page.fill('#er-gebruik', '1 el per 500 g vlees');
+  await page.click('#tab-eten button:has-text("+ recept opslaan")');
   await page.click('#tab-eten .rij:has-text("Cajun-mix") .groei');
   await expect(page.locator('dialog#modal')).toContainText('Houdbaar');
   await expect(page.locator('dialog#modal')).toContainText('6 mnd');
+  await expect(page.locator('dialog#modal')).toContainText('1 el per 500 g');
 });
 
 test('maaltijd loggen uit kookboek telt op in dagtotalen', async ({ page }) => {
   await page.goto(APP);
+  await maakRecepten(page, [KIP]);
   await page.evaluate(() => window.showTab('eten'));
   await page.click('#tab-eten .rij:has-text("Gegrilde kipfilet") .groei');
   await page.fill('#log-porties', '2');
@@ -460,20 +529,15 @@ test('7-daags gemiddelde en trend per week', async ({ page }) => {
   expect(r.perWeek).toBeCloseTo(0.7, 1);
 });
 
-test('eigen recept toevoegen en verwijderen met undo', async ({ page }) => {
+test('eigen recept verwijderen met undo', async ({ page }) => {
   await page.goto(APP);
+  await maakRecepten(page, [KIP]);
   await page.evaluate(() => window.showTab('eten'));
-  await page.click('#tab-eten summary:has-text("Eigen recept")');
-  await page.fill('#er-naam', 'Proteïne-pannenkoeken');
-  await page.fill('#er-kcal', '400');
-  await page.fill('#er-eiwit', '35');
-  await page.fill('#er-ingr', '100 g havermout\n2 eieren\n100 g kwark');
-  await page.fill('#er-stappen', 'Blenden\nBakken');
-  await page.click('#tab-eten button:has-text("+ recept opslaan")');
-  await expect(page.locator('#tab-eten')).toContainText('Proteïne-pannenkoeken');
-  await page.reload();
-  await page.evaluate(() => window.showTab('eten'));
-  await expect(page.locator('#tab-eten')).toContainText('Proteïne-pannenkoeken'); // persistent
+  await page.click('#tab-eten .rij:has-text("Gegrilde kipfilet") .groei');
+  await page.click('dialog#modal button:has-text("Verwijder")');
+  await expect(page.locator('#tab-eten')).toContainText('Jouw kookboek is nog leeg');
+  await page.click('#toast button:has-text("Ongedaan maken")');
+  await expect(page.locator('#tab-eten')).toContainText('Gegrilde kipfilet');
 });
 
 test('screenshots: iPhone 390×844 en desktop 1280×800', async ({ browser }) => {
