@@ -1234,19 +1234,66 @@ function planVersErbij(p){
   }
   return vers.join(', ');
 }
-/* Boodschappenlijst genereren: alle ingrediënten van de geplande gerechten,
-   identieke regels samengevoegd met een aantal ervoor. Afgevinkte regels
-   blijven afgevinkt zolang de regel niet verandert. */
+/* ---- ingrediënten parsen & optellen ----
+   "1 ui" + "2 uien" moet "3 uien" worden, 550 g + 600 g = 1,15 kg, en
+   2 tenen + 2 tenen = 4 tenen knoflook. We parsen hoeveelheid + eenheid,
+   normaliseren meervouden, en tellen per (eenheid, naam) op. Regels zonder
+   herkenbare hoeveelheid ("scheut azijn") worden als aantal geteld. */
+const ENKELVOUD = {'uien':'ui', "paprika's":'paprika', 'paprika’s':'paprika', 'eieren':'ei',
+  'citroenen':'citroen', 'limoenen':'limoen', 'laurierblaadjes':'laurierblaadje', 'kruidnagels':'kruidnagel'};
+const MEERVOUD = {'ui':'uien', 'paprika':'paprika’s', 'ei':'eieren', 'citroen':'citroenen',
+  'limoen':'limoenen', 'laurierblaadje':'laurierblaadjes', 'kruidnagel':'kruidnagels'};
+const EENHEID_MV = {'blik':'blikken', 'teen':'tenen', 'bol':'bollen', 'plak':'plakken', 'stengel':'stengels'};
+const BREUKEN = {'½':0.5, '¼':0.25, '¾':0.75, '1½':1.5, '2½':2.5};
+function normIngrNaam(t){
+  return t.trim().split(/\s+/).map(w => ENKELVOUD[w.toLowerCase()] || w).join(' ');
+}
+function parseIngredient(regel){
+  const s = regel.trim();
+  const m = s.match(/^(\d+(?:[.,]\d+)?|½|¼|¾|1½|2½)\s*(kg|g|ml|l|el|tl|blikken|blik|tenen|teen|bollen|bol|plakken|plak|stengels|stengel)?\s+(.+)$/i);
+  if(!m) return {qty: 1, unit: '×', naam: s}; /* "scheut azijn", "stukje gember" */
+  let qty = BREUKEN[m[1]] !== undefined ? BREUKEN[m[1]] : parseFloat(m[1].replace(',', '.'));
+  let unit = (m[2] || '').toLowerCase();
+  unit = ({'blikken':'blik', 'tenen':'teen', 'bollen':'bol', 'plakken':'plak', 'stengels':'stengel'})[unit] || unit;
+  if(unit === 'kg'){ qty *= 1000; unit = 'g'; }
+  if(unit === 'l'){ qty *= 1000; unit = 'ml'; }
+  return {qty, unit: unit || 'stuk', naam: normIngrNaam(m[3])};
+}
+function fmtIngredient(qty, unit, naam){
+  const q = Math.round(qty * 100) / 100;
+  const num = q.toLocaleString('nl-NL', {maximumFractionDigits: 2});
+  if(unit === 'g') return q >= 1000 ? (q/1000).toLocaleString('nl-NL', {maximumFractionDigits: 2}) + ' kg ' + naam : num + ' g ' + naam;
+  if(unit === 'ml') return q >= 1000 ? (q/1000).toLocaleString('nl-NL', {maximumFractionDigits: 2}) + ' l ' + naam : num + ' ml ' + naam;
+  if(unit === '×') return q === 1 ? naam : num + '× ' + naam;
+  if(unit === 'stuk'){
+    if(q === 1) return '1 ' + naam;
+    const woorden = naam.split(' ');
+    const laatste = woorden[woorden.length - 1].toLowerCase();
+    if(MEERVOUD[laatste]) return num + ' ' + woorden.slice(0, -1).concat(MEERVOUD[laatste]).join(' ');
+    return num + '× ' + naam;
+  }
+  const u = q > 1 && EENHEID_MV[unit] ? EENHEID_MV[unit] : unit;
+  return num + ' ' + u + ' ' + naam;
+}
+/* Boodschappenlijst genereren: hoeveelheden van alle geplande gerechten
+   worden per ingrediënt écht opgeteld. Afgevinkte regels blijven afgevinkt
+   zolang de (samengetelde) regel niet verandert. */
 function genereerBoodschappen(){
   const rs = alleRecepten();
-  const counts = new Map();
+  const som = new Map(); /* key: unit|naam-lowercase → {qty, unit, naam} */
   for(const p of S.freezer.plan) for(const rid of p.recepten){
     const r = rs.find(x => x.id === rid); if(!r || r.cat === 'mix') continue;
-    for(const ing of (r.ingr || [])) counts.set(ing, (counts.get(ing) || 0) + 1);
+    for(const ing of (r.ingr || [])){
+      const {qty, unit, naam} = parseIngredient(ing);
+      const key = unit + '|' + naam.toLowerCase();
+      const bestaand = som.get(key);
+      if(bestaand) bestaand.qty += qty;
+      else som.set(key, {qty, unit, naam});
+    }
   }
   const oud = new Map((S.grocery.lists.plan || []).map(x => [x.item, x.checked]));
-  S.grocery.lists.plan = [...counts.entries()].map(([ing, n]) => {
-    const item = (n > 1 ? n + '× ' : '') + ing;
+  S.grocery.lists.plan = [...som.values()].map(({qty, unit, naam}) => {
+    const item = fmtIngredient(qty, unit, naam);
     return {item, checked: oud.get(item) || false};
   });
 }
