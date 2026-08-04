@@ -252,17 +252,6 @@ function gcalLink(titel, datumISO, van, tot, details){
     + '&details=' + encodeURIComponent(details || '');
 }
 /* ================= seed-data ================= */
-function seedLijst(items){ return items.map(item => ({item, checked:false})); }
-function seedGrocery(){
-  /* r1-r4 vervallen: de rondelijst wordt nu gegenereerd uit het geplande menu */
-  return {
-    staples: seedLijst(['Tomatenblokjes (6+ blikken)','Passata','Tomatenpuree','Kidneybonen','Zwarte bonen','Kikkererwten (blik)','Linzen (blik)','Maïs','Kokosmelk (3+)','Rijst','Pasta','Rode linzen (droog)','Bloem','Maizena','Paneermeel','Noedels','Sojasaus','Ketjap manis','Sambal','Rode currypasta','Pindakaas','Ketchup','Honing','Azijn','Olie','Bouillonblokjes (3 soorten)','Paprikapoeder (gewoon + gerookt)','Komijn','Kerriepoeder','Garam masala','Kurkuma','Oregano','Italiaanse kruiden','Chilipoeder','Laurier','Kruidnagel','Diepvries spinazie','Diepvries sperziebonen','Diepvries broccoliroosjes']),
-    r1: seedLijst(['3 uien','1 bol knoflook','2 rode paprika’s','1 winterpeen','Bleekselderij (optioneel)','Gember','1 limoen','500 g rundergehakt','500 g half-om-half gehakt','1,1 kg kippendij','200 ml kookroom']),
-    r2: seedLijst(['5 uien','Knoflook','2 paprika’s','Gember','1 citroen','500 g half-om-half gehakt','600 g kippendij','600 g riblappen','1 ei']),
-    r3: seedLijst(['6 uien','Knoflook','2 paprika’s','Gember','1 limoen','1 citroen','1,2 kg kippendij/kipfilet','600 g hacheevlees','Ontbijtkoek (1 plak)','Gefruite uitjes']),
-    r4: seedLijst(['4 uien','Knoflook','2 rode paprika’s','250 g champignons','600 g zoete aardappel','Gember','1,2 kg kippendij']),
-  };
-}
 const TECHNIEKEN = ['Retrieval','Spaced review','Interleaved oefenen','Self-explanation','Dual coding','Herlezen (betrapt)'];
 const DOMEINEN = ['School','Werk','Business','Thuis'];
 /* ================= kookboek =================
@@ -273,13 +262,13 @@ const CAT_NAMEN = {kip:'Kip', rund:'Rund & gehakt', vis:'Vis', ei:'Eieren', vega
 function alleRecepten(){ return S.cookbook.custom; }
 /* ================= store ================= */
 const KEY = 'lifeos_v1';
-const SCHEMA_VERSION = 4;
+const SCHEMA_VERSION = 5;
 const COLLECTIONS = ['settings','freezer','grocery','training','study','tasks','money','cookbook','nutrition'];
 function defaults(){
   return {
     settings: {name:'', weekGoal:3, cycleDays:16, supabaseUrl:'', supabaseKey:'', gcalEmbedSrc:'', updated_at:''},
     freezer: {plan: [], voorraad: [], draaiboek: [], lastCookDate:null, updated_at:''},
-    grocery: {lists: seedGrocery(), updated_at:''},
+    grocery: {lists: {staples: [], plan: []}, updated_at:''},
     training: {log: [], updated_at:''},
     study: {vakken: [], items: [], sessions: [], updated_at:''},
     tasks: {list: [], updated_at:''},
@@ -313,9 +302,16 @@ function migrate(st){
   for(const pl of st.freezer.plan){ if(!Array.isArray(pl.recepten)) pl.recepten = []; if(!pl.porties) pl.porties = 4; }
   delete st.freezer.dishes; delete st.freezer.nextRound; delete st.freezer.cookdayChecked;
   if(!st.grocery.lists) st.grocery.lists = {};
-  if(!Array.isArray(st.grocery.lists.staples) || !st.grocery.lists.staples.length) st.grocery.lists.staples = seedGrocery().staples;
+  if(!Array.isArray(st.grocery.lists.staples)) st.grocery.lists.staples = [];
   if(!Array.isArray(st.grocery.lists.plan)) st.grocery.lists.plan = [];
   delete st.grocery.lists.r1; delete st.grocery.lists.r2; delete st.grocery.lists.r3; delete st.grocery.lists.r4;
+  /* v<5: laatste seed-restanten opruimen — de oude basisvoorraadlijst was 100%
+     voorgevuld (er bestond geen UI om zelf items toe te voegen) en vz-*-voorraad
+     kwam uit de oude vaste gerechten. De gebruiker beheert nu alles zelf. */
+  if((st._v || 0) < 5){
+    st.grocery.lists.staples = [];
+    st.freezer.voorraad = st.freezer.voorraad.filter(v => !String(v.id).startsWith('vz-'));
+  }
   if(!Array.isArray(st.training.log)) st.training.log = [];
   for(const k of ['vakken','items','sessions']) if(!Array.isArray(st.study[k])) st.study[k] = [];
   if(!Array.isArray(st.tasks.list)) st.tasks.list = [];
@@ -920,16 +916,6 @@ function logHandmatig(){
   toast('Gelogd ✓');
 }
 /* ---- boodschappen ---- */
-function lijstDetails(key, naam){
-  const l = S.grocery.lists[key];
-  const done = l.filter(x => x.checked).length;
-  return `<details class="card" data-key="lijst-${key}"><summary>${naam} <span class="badge b-grijs">${done}/${l.length}</span></summary>
-    ${l.map((x, i) => `<div class="rij ${x.checked ? 'klaar':''}">
-      <input type="checkbox" class="chk" ${x.checked ? 'checked':''} onchange="toggleGrocery('${key}',${i})">
-      <div class="groei titel">${esc(x.item)}</div></div>`).join('')}
-    <div class="formrij"><button class="knop klein licht" onclick="resetGrocery('${key}')">Lijst resetten</button></div>
-  </details>`;
-}
 function bouwBoodschappen(){
   const plan = S.grocery.lists.plan || [];
   const done = plan.filter(x => x.checked).length;
@@ -942,7 +928,29 @@ function bouwBoodschappen(){
         <div class="formrij"><button class="knop klein licht" onclick="resetGrocery('plan')">Lijst resetten</button></div>
       </div>`
     : `<div class="card"><h2>Voor jouw kookronde</h2><div class="leeg">Plan eerst gerechten bij 🍳 Kookronde — de boodschappenlijst wordt dan automatisch samengesteld.</div></div>`;
-  return planKaart + lijstDetails('staples', 'Basisvoorraad (aanvullen wanneer op)');
+  const staples = S.grocery.lists.staples;
+  const staplesKaart = `<details class="card" data-key="lijst-staples" ${staples.length ? '' : 'open'}><summary>Basisvoorraad <span class="badge b-grijs">${staples.filter(x => x.checked).length}/${staples.length}</span></summary>
+    <div class="hint" style="margin:.3rem 0 .4rem">Jouw vaste voorraadlijst (blikken, potten, kruiden) — vul hem zelf. Afvinken = in huis.</div>
+    ${staples.map((x, i) => `<div class="rij ${x.checked ? 'klaar':''}">
+      <input type="checkbox" class="chk" ${x.checked ? 'checked':''} onchange="toggleGrocery('staples',${i})">
+      <div class="groei titel">${esc(x.item)}</div>
+      <button class="del" onclick="delStaple(${i})" aria-label="verwijderen">×</button></div>`).join('') || '<div class="leeg">Nog leeg.</div>'}
+    <div class="formrij">
+      <input id="staple-nieuw" placeholder="Nieuw item (bijv. 'Tomatenblokjes 6+ blikken')" style="flex:1">
+      <button class="knop" onclick="addStaple()">+ item</button>
+    </div>
+    ${staples.length ? `<div class="formrij"><button class="knop klein licht" onclick="resetGrocery('staples')">Alles uitvinken</button></div>` : ''}
+  </details>`;
+  return planKaart + staplesKaart;
+}
+function addStaple(){
+  const item = eis('#staple-nieuw'); if(!item) return;
+  S.grocery.lists.staples.push({item, checked: false});
+  save('grocery');
+}
+function delStaple(i){
+  const [x] = S.grocery.lists.staples.splice(i, 1); save('grocery');
+  if(x) toast('Item verwijderd', () => { S.grocery.lists.staples.splice(i, 0, x); save('grocery'); });
 }
 /* ---- kookronde: plannen, genereren, koken, voorraad ---- */
 function planKookTijd(p, rs){

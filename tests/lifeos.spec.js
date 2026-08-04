@@ -241,7 +241,7 @@ test('datumlogica: spacing-gap, kookronde, achterstallig', async ({ page }) => {
   expect(r.overdueKlaar).toBe(false);
 });
 
-test('migratie: oude vaste-gerechten-data wordt voorraad (schema v3 → v4)', async ({ page }) => {
+test('migratie naar v5: seed-restanten (vaste gerechten, basisvoorraad) worden opgeruimd', async ({ page }) => {
   await page.goto(APP);
   await page.evaluate(() => {
     localStorage.setItem('lifeos_v1', JSON.stringify({
@@ -256,15 +256,16 @@ test('migratie: oude vaste-gerechten-data wordt voorraad (schema v3 → v4)', as
     }));
   });
   await page.reload();
-  const st = await page.evaluate(() => window.lifeos.store.freezer);
-  // porties > 0 worden voorraad-items (zonder macro's — het kookboek is nu van de gebruiker); lege gerechten niet
-  expect(st.voorraad.length).toBe(1);
-  expect(st.voorraad[0].naam).toBe('Chili con carne');
-  expect(st.voorraad[0].porties).toBe(3);
-  expect(st.voorraad[0].macros).toBeNull();
-  expect(st.lastCookDate).toBe('2026-07-20');
-  expect(st.dishes).toBeUndefined();
-  expect(st.nextRound).toBeUndefined();
+  const st = await page.evaluate(() => ({
+    freezer: window.lifeos.store.freezer,
+    staples: window.lifeos.store.grocery.lists.staples,
+  }));
+  // v5: alle seed-restanten opgeruimd — oude vaste gerechten en voorgevulde basisvoorraad verdwijnen
+  expect(st.freezer.voorraad.length).toBe(0);
+  expect(st.staples.length).toBe(0);
+  expect(st.freezer.lastCookDate).toBe('2026-07-20');
+  expect(st.freezer.dishes).toBeUndefined();
+  expect(st.freezer.nextRound).toBeUndefined();
 });
 
 test('quick-add via native dialog: taak vanaf Vandaag', async ({ page }) => {
@@ -404,6 +405,21 @@ test('statische bestanden: PNG-iconen en manifest aanwezig en gelinkt', async ({
   await page.goto(APP);
   await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute('href', 'apple-touch-icon.png');
   await expect(page.locator('link[rel="manifest"]')).toHaveAttribute('href', 'manifest.webmanifest');
+});
+
+test('basisvoorraad: begint leeg, zelf items toevoegen en verwijderen', async ({ page }) => {
+  await page.goto(APP);
+  await page.evaluate(() => { window.showTab('eten'); etenView = 'bood'; renderEten(); });
+  await expect(page.locator('#tab-eten details:has-text("Basisvoorraad")')).toContainText('Nog leeg');
+  await page.fill('#staple-nieuw', 'Tomatenblokjes (6+ blikken)');
+  await page.click('#tab-eten button:has-text("+ item")');
+  await expect(page.locator('#tab-eten')).toContainText('Tomatenblokjes (6+ blikken)');
+  await page.reload();
+  await page.evaluate(() => { window.showTab('eten'); etenView = 'bood'; renderEten(); });
+  await expect(page.locator('#tab-eten')).toContainText('Tomatenblokjes (6+ blikken)'); // persistent
+  await page.locator('#tab-eten details:has-text("Basisvoorraad") summary').click();
+  await page.locator('#tab-eten details:has-text("Basisvoorraad") .del').click();
+  await expect(page.locator('#tab-eten details:has-text("Basisvoorraad")')).toContainText('Nog leeg');
 });
 
 test('kookboek: begint leeg, eigen recept via formulier, zoeken en dialog', async ({ page }) => {
